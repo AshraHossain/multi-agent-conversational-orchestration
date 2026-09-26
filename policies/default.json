@@ -1,0 +1,1 @@
+{"max_regenerations": 2, "min_score": 0.8, "max_estimated_cost_usd": 0.1, "forbidden_tools": ["shell", "kubectl_write", "email_send"], "require_human_approval": true}

@@ -1,0 +1,1 @@
+{"incident_id":"INC-001","alert":"Elevated 5xx errors after deploy; root cause unconfirmed","evidence":["Prometheus 5xx rate 12% at 10:05 UTC","GitHub deploy abc123 at 10:02 UTC","Kubernetes 3/4 pods ready"],"proposed_action":"Propose rollback for human review; do not execute"}
