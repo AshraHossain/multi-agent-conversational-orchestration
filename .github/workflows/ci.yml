@@ -8,5 +8,9 @@ jobs:
       - uses: astral-sh/setup-uv@v6
       - run: uv python install 3.11
       - run: uv sync --group dev --extra langgraph
-      - run: uv run pytest -q
-      - run: uv run ruff check src tests
+      - name: Lint
+        run: uv run ruff check src tests
+      - name: Test (offline only, 80% coverage gate)
+        run: uv run pytest -m "not live" --cov=ma_co --cov-report=term-missing --cov-fail-under=80
+      - name: Eval harness
+        run: uv run python -m ma_co.eval

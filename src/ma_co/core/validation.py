@@ -1,6 +1,20 @@
+import html
 import re
 
 from ma_co.core.models import IncidentInput
+
+_SAFE_ID = re.compile(r"[^a-zA-Z0-9_\-]")
+
+
+def sanitize_identifier(value: str) -> str:
+    """Strip path-traversal and non-safe chars from an identifier (e.g. run_id, incident_id)."""
+    return _SAFE_ID.sub("", value.replace("..", "").replace("/", "").replace("\\", ""))
+
+
+def frame_untrusted_text(text: str) -> str:
+    """Wrap untrusted external content in XML data boundaries to block prompt injection."""
+    escaped = html.escape(text, quote=False)
+    return f"<untrusted_context>{escaped}</untrusted_context>"
 
 
 def validate_incident_draft(incident: IncidentInput, draft: str) -> list[str]:

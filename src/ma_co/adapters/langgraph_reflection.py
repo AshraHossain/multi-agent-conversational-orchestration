@@ -24,10 +24,15 @@ def build_graph(judge: Judge, regenerator: Regenerator, policy: Policy):
     def evaluate(state: State) -> dict:
         incident = IncidentInput.model_validate(state["incident"])
         result = judge.evaluate(incident, state["draft"])
-        history = state.get("history", [])[-3:] + [{"score": result.score, "critique": result.critique[:500]}]
-        return {"score": result.score, "critique": result.critique,
-                "missing_evidence": result.missing_evidence, "tool_use_valid": result.tool_use_valid,
-                "cost": state.get("cost", 0) + result.estimated_cost_usd, "history": history}
+        history = (
+            state.get("history", [])[-3:]
+            + [{"score": result.score, "critique": result.critique[:500]}]
+        )
+        return {
+            "score": result.score, "critique": result.critique,
+            "missing_evidence": result.missing_evidence, "tool_use_valid": result.tool_use_valid,
+            "cost": state.get("cost", 0) + result.estimated_cost_usd, "history": history,
+        }
 
     def route(state: State) -> str:
         if state.get("cost", 0) > policy.max_estimated_cost_usd:

@@ -30,11 +30,10 @@ class FixtureJudge:
 
     def evaluate(self, incident: IncidentInput, draft: str) -> JudgeResult:
         has_source = bool(incident.evidence) and "Evidence:" in draft
-
         return JudgeResult(
             score=0.9 if has_source else 0.3,
             critique="OK" if has_source else "Cite supplied evidence",
-            missing_evidence=[] if has_source else ["Cite incident evidence"],
+            missing_evidence=tuple() if has_source else ("Cite incident evidence",),
         )
 
 
@@ -47,7 +46,6 @@ class FixtureRegenerator:
     ) -> tuple[str, float]:
         revised = draft
 
-        # Add an omitted ID, but do not mask an explicitly incorrect ID.
         if incident.incident_id not in revised and "Incident ID:" not in revised:
             revised = f"Incident ID: {incident.incident_id}\n{revised}"
 
@@ -61,12 +59,7 @@ class FixtureRegenerator:
 
 
 class ReflectionEngine:
-    def __init__(
-        self,
-        judge: Judge,
-        regenerator: Regenerator,
-        policy: Policy,
-    ):
+    def __init__(self, judge: Judge, regenerator: Regenerator, policy: Policy) -> None:
         self.judge = judge
         self.regenerator = regenerator
         self.policy = policy
@@ -86,7 +79,6 @@ class ReflectionEngine:
         for number in range(self.policy.max_regenerations + 1):
             result = self.judge.evaluate(incident, record.draft)
 
-            # Deterministic defects veto the judge's quality score.
             defects = validate_incident_draft(incident, record.draft)
             if defects:
                 result = result.model_copy(
@@ -97,65 +89,91 @@ class ReflectionEngine:
                             + "\nDeterministic validation failures: "
                             + "; ".join(defects)
                         ),
-                        "missing_evidence": [
-                            *result.missing_evidence,
-                            *defects,
-                        ],
+                        "missing_evidence": tuple(result.missing_evidence) + tuple(defects),
                     }
                 )
 
-            record.estimated_cost_usd += result.estimated_cost_usd
-            record.iterations.append(
-                Iteration(
-                    number=number,
-                    draft=record.draft,
-                    judge=result,
-                )
+            new_cost = record.estimated_cost_usd + result.estimated_cost_usd
+            new_iterations = tuple(record.iterations) + (
+                Iteration(number=number, draft=record.draft, judge=result),
             )
 
             if initial_score is None:
                 initial_score = result.score
 
-            record.improvement_delta = round(result.score - initial_score, 4)
+            improvement_delta = round(result.score - initial_score, 4)
 
-            if record.estimated_cost_usd > self.policy.max_estimated_cost_usd:
-                record.status = Status.COST_EXCEEDED
+            if new_cost >= self.policy.max_estimated_cost_usd:
+                record = record.model_copy(
+                    update={
+                        "status": Status.COST_EXCEEDED,
+                        "estimated_cost_usd": new_cost,
+                        "iterations": new_iterations,
+                        "improvement_delta": improvement_delta,
+                        "updated_at": utc_now(),
+                    }
+                )
                 break
 
-            if (
+            passes = (
                 result.score >= self.policy.min_score
                 and result.tool_use_valid
                 and not result.missing_evidence
-            ):
-                if incident.proposed_action and self.policy.require_human_approval:
-                    record.status = Status.NEEDS_REVIEW
-                else:
-                    record.status = Status.APPROVED_DRAFT
-                break
-
-            if number == self.policy.max_regenerations:
-                break
-
-            candidate, estimated_cost = self.regenerator.regenerate(
-                incident,
-                record.draft,
-                result.critique,
             )
 
-            if estimated_cost < 0:
+            if passes:
+                status = (
+                    Status.NEEDS_REVIEW
+                    if incident.proposed_action and self.policy.require_human_approval
+                    else Status.APPROVED_DRAFT
+                )
+                record = record.model_copy(
+                    update={
+                        "status": status,
+                        "estimated_cost_usd": new_cost,
+                        "iterations": new_iterations,
+                        "improvement_delta": improvement_delta,
+                        "updated_at": utc_now(),
+                    }
+                )
+                break
+
+            record = record.model_copy(
+                update={
+                    "estimated_cost_usd": new_cost,
+                    "iterations": new_iterations,
+                    "improvement_delta": improvement_delta,
+                }
+            )
+
+            if number == self.policy.max_regenerations:
+                record = record.model_copy(update={"updated_at": utc_now()})
+                break
+
+            candidate, regen_cost = self.regenerator.regenerate(
+                incident, record.draft, result.critique
+            )
+
+            if regen_cost < 0:
                 raise ValueError("Negative cost")
 
-            record.estimated_cost_usd += estimated_cost
-
-            if record.estimated_cost_usd > self.policy.max_estimated_cost_usd:
-                record.status = Status.COST_EXCEEDED
+            new_cost2 = record.estimated_cost_usd + regen_cost
+            if new_cost2 > self.policy.max_estimated_cost_usd:
+                record = record.model_copy(
+                    update={
+                        "status": Status.COST_EXCEEDED,
+                        "estimated_cost_usd": new_cost2,
+                        "updated_at": utc_now(),
+                    }
+                )
                 break
 
             if candidate == record.draft:
+                record = record.model_copy(update={"updated_at": utc_now()})
                 break
 
-            record.draft = candidate
+            record = record.model_copy(
+                update={"draft": candidate, "estimated_cost_usd": new_cost2}
+            )
 
-        record.updated_at = utc_now()
         return record
-        
