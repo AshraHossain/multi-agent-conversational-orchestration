@@ -49,3 +49,9 @@ select = ["E", "F", "I", "UP", "B", "S"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["S101", "S105", "S106"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+ignore_missing_imports = true
+exclude = ["tests/", "src/ma_co/adapters/genai_adapter\\.py", "src/ma_co/adapters/mongo_store\\.py"]

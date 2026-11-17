@@ -2,6 +2,7 @@
 
 import hmac
 import json
+import logging
 import os
 import time
 from collections import defaultdict, deque
@@ -23,6 +24,10 @@ from ma_co.core.models import (
 from ma_co.core.reflection import FixtureJudge, FixtureRegenerator, ReflectionEngine
 from ma_co.core.store import RunStore
 from ma_co.core.validation import sanitize_identifier
+from ma_co.logging_config import configure_logging
+
+configure_logging()
+log = logging.getLogger(__name__)
 
 _PROBE_PATHS = frozenset({"/health", "/healthz", "/readyz"})
 _DEFAULT_MAX_PAYLOAD_BYTES = 1_048_576
