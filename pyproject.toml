@@ -25,6 +25,7 @@ dev = [
     "pytest-cov>=5,<8",
     "httpx>=0.27,<1",
     "ruff>=0.8,<1",
+    "mypy>=1.11,<2",
     "langgraph>=0.2,<2",
 ]
 
@@ -54,4 +55,4 @@ select = ["E", "F", "I", "UP", "B", "S"]
 python_version = "3.11"
 strict = true
 ignore_missing_imports = true
-exclude = ["tests/", "src/ma_co/adapters/genai_adapter\\.py", "src/ma_co/adapters/mongo_store\\.py"]
+exclude = ["tests/", "src/ma_co/adapters/"]

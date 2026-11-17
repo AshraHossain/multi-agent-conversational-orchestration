@@ -1,4 +1,4 @@
-.PHONY: setup dev lint test eval check docker-build
+.PHONY: setup dev lint typecheck test eval check docker-build
 
 setup:
 	uv sync --group dev
@@ -9,13 +9,16 @@ dev:
 lint:
 	uv run ruff check .
 
+typecheck:
+	uv run mypy src/ma_co
+
 test:
 	uv run pytest --cov=ma_co --cov-report=term-missing --cov-fail-under=80
 
 eval:
 	uv run python -m ma_co.eval
 
-check: lint test eval
+check: lint typecheck test eval
 
 docker-build:
 	docker build -t ma-co:latest .

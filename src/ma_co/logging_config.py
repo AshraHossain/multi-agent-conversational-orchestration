@@ -33,7 +33,7 @@ class _JsonFormatter(logging.Formatter):
 
 def configure_logging(level: str | None = None) -> None:
     """Wire the root logger to emit JSON on stderr."""
-    effective = (level or os.getenv("LOG_LEVEL", "INFO")).upper()
+    effective = (level or os.getenv("LOG_LEVEL") or "INFO").upper()
     handler = logging.StreamHandler(sys.stderr)
     handler.setFormatter(_JsonFormatter())
     root = logging.getLogger()

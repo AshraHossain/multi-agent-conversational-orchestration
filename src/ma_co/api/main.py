@@ -8,6 +8,7 @@ import time
 from collections import defaultdict, deque
 from pathlib import Path
 from threading import Lock
+from typing import Any
 from uuid import UUID, uuid4
 
 from fastapi import FastAPI, HTTPException, Request, Response, status
@@ -88,7 +89,7 @@ engine = ReflectionEngine(FixtureJudge(), FixtureRegenerator(), policy)
 
 
 @app.middleware("http")
-async def security_and_telemetry_middleware(request: Request, call_next) -> Response:
+async def security_and_telemetry_middleware(request: Request, call_next: Any) -> Response:
     """Enforce auth, rate limiting, MIME/size caps, and OWASP security headers."""
     start = time.perf_counter()
     raw_req_id = request.headers.get("X-Request-ID", "").strip()
@@ -143,6 +144,16 @@ async def security_and_telemetry_middleware(request: Request, call_next) -> Resp
 
     response = await call_next(request)
     elapsed_ms = (time.perf_counter() - start) * 1000.0
+    log.info(
+        "request",
+        extra={
+            "request_id": request_id,
+            "method": request.method,
+            "path": path,
+            "status_code": response.status_code,
+            "elapsed_ms": round(elapsed_ms, 2),
+        },
+    )
     return _attach_security_headers(response, request_id, elapsed_ms)
 
 
@@ -150,7 +161,7 @@ async def security_and_telemetry_middleware(request: Request, call_next) -> Resp
 @app.get("/healthz")
 def healthz() -> dict[str, str]:
     """Liveness probe."""
-    return {"status": "ok"}
+    return {"status": "ok", "version": app.version}
 
 
 @app.get("/readyz")

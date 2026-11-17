@@ -17,6 +17,7 @@ jobs:
       - run: uv python install ${{ matrix.python-version }}
       - run: uv sync --group dev
       - run: uv run ruff check .
+      - run: uv run mypy src/ma_co
       - run: uv run pytest --cov=ma_co --cov-report=term-missing --cov-fail-under=80
       - run: uv run python -m ma_co.eval
 
