@@ -1,35 +1,21 @@
 services:
-  api:
-    build: .
+  ma-co:
+    build:
+      context: .
+      dockerfile: Dockerfile
     ports:
       - "8000:8000"
+    env_file:
+      - path: .env
+        required: false
     environment:
-      - MONGO_URI=mongodb://${MONGO_USER:-ma_co}:${MONGO_PASSWORD:?MONGO_PASSWORD required}@mongo:27017
-      - RATE_LIMIT_PER_MINUTE=120
-      - MAX_PAYLOAD_BYTES=65536
-    depends_on:
-      mongo:
-        condition: service_healthy
+      - CREWAI_MOCK=${CREWAI_MOCK:-1}
+      - RATE_LIMIT_PER_MINUTE=${RATE_LIMIT_PER_MINUTE:-120}
+      - MAX_PAYLOAD_BYTES=${MAX_PAYLOAD_BYTES:-1048576}
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/healthz')"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"]
       interval: 30s
       timeout: 5s
       retries: 3
-
-  mongo:
-    image: mongo:7
-    ports:
-      - "127.0.0.1:27017:27017"
-    environment:
-      - MONGO_INITDB_ROOT_USERNAME=${MONGO_USER:-ma_co}
-      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_PASSWORD:?MONGO_PASSWORD required}
-    volumes:
-      - mongo_data:/data/db
-    healthcheck:
-      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-volumes:
-  mongo_data:
+      start_period: 5s
+    restart: unless-stopped

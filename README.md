@@ -1,175 +1,156 @@
-# Multi-Agent Conversational Orchestration
+# Multi-Agent Conversational Orchestration (`ma_co`)
 
 [![CI](https://github.com/AshraHossain/multi-agent-conversational-orchestration/actions/workflows/ci.yml/badge.svg)](https://github.com/AshraHossain/multi-agent-conversational-orchestration/actions)
-[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
-[![Coverage ≥80%](https://img.shields.io/badge/coverage-%E2%89%A580%25-brightgreen)](https://github.com/AshraHossain/multi-agent-conversational-orchestration)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688.svg)](https://fastapi.tiangolo.com)
-[![LangGraph](https://img.shields.io/badge/LangGraph-0.2+-orange.svg)](https://langchain-ai.github.io/langgraph/)
-[![CrewAI](https://img.shields.io/badge/CrewAI-0.100+-blue.svg)](https://www.crewai.com)
+![Coverage](https://img.shields.io/badge/coverage-94%25-brightgreen)
+![Python](https://img.shields.io/badge/python-3.11%20%7C%203.12-blue)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.115%2B-009688)
+![CrewAI & LangGraph](https://img.shields.io/badge/Orchestration-CrewAI%20%2B%20LangGraph-4F46E5)
 
-Policy-gated incident-response orchestration service. Combines a read-only three-agent **CrewAI** crew, a bounded **LangGraph** reflection state machine, a deterministic **SRAF-style policy & quality gate engine**, and a hardened **FastAPI** API.
+An enterprise incident-response orchestration service that combines a read-only three-agent **CrewAI** crew (`Triager -> Investigator -> Safety Reviewer`), a bounded **LangGraph** reflection state machine, and a deterministic **SRAF-style policy & quality gate engine** behind a hardened **FastAPI** API. All default runs execute 100% offline with deterministic fixtures (`CREWAI_MOCK=1`), immutable Pydantic contracts, and strict human-in-the-loop approval boundaries — agents never execute live rollbacks, deployments, or emails.
 
-> **Safety boundary**: Agents never execute rollbacks, deployments, or emails. All actions are proposed and require explicit human review. The `/review` endpoint records decisions only.
+---
 
-## Evaluation Scorecard
+## System Architecture & Request Flow
 
-| Metric | Value |
-|---|---|
-| Recall@1 (score ≥ 0.8) | 1.00 |
-| Grounding rate | 1.00 |
-| Guardrail pass rate | 1.00 |
-| Latency p50 | < 1 ms |
-| Latency p95 | < 5 ms |
-
-*Fixture-based offline scores. See `evaluation/eval_report.json` after `make eval`.*
-
-## Architecture
-
-### Layered System Architecture
+### 1. Layered System Architecture
 
 ```mermaid
 flowchart LR
-    subgraph Edge["Edge / Security Middleware"]
-        A[X-API-Key Auth\nhmac.compare_digest]
-        B[Sliding-Window\nRate Limiter]
-        C[MIME + Size\nGuards]
-        D[OWASP Headers]
+    subgraph Client["Client & CI Surface"]
+        U["REST Client / CLI"]
+        EV["Eval Harness\n(ma_co.eval)"]
     end
 
-    subgraph Router["Thin FastAPI Routers"]
-        E[POST /v1/incidents/triage]
-        F[GET /v1/runs/:id]
-        G[POST /v1/runs/:id/review]
-        H[GET /health /healthz /readyz]
+    subgraph Edge["FastAPI Edge & Guardrails (api/main.py)"]
+        MW["Security & Telemetry Middleware\n(401 Auth, 429 Rate Limit, 413 Size, 415 MIME, OWASP)"]
+        PR["Liveness & Readiness\n(/health, /healthz, /readyz)"]
     end
 
-    subgraph Core["Deterministic Pure Core"]
-        I[IncidentInput\nPolicy — frozen DTOs]
-        J[validate_incident_draft\nsanitize_identifier\nframe_untrusted_text]
-        K[ReflectionEngine\nbounded retry + cost cap]
-        L[RunStore\natomic JSON writes]
+    subgraph Core["Deterministic Pure Core (ma_co/core/)"]
+        MOD["Frozen DTOs\n(ConfigDict frozen=True)"]
+        VAL["Pure Validators & Framing\n(validate_incident_draft, untrusted_context)"]
+        ENG["ReflectionEngine\n(Bounded Retries & Cost Caps)"]
+        STR["RunStore\n(Atomic JSON + Path Guard)"]
     end
 
-    subgraph Adapters["Isolated Service Adapters"]
-        subgraph Live["Live Cloud"]
-            M[GenaiJudge\nGenaiRegenerator\ngoogle-genai]
-            N[CrewAI Crew\nBynara / OpenAI-compat]
-            O[MongoRunStore\npymongo]
-        end
-        subgraph Offline["Offline Mock"]
-            P[FixtureJudge\nFixtureRegenerator]
-            Q[CREWAI_MOCK=1]
-            R[File-based RunStore]
-        end
+    subgraph Adapters["Isolated Service Adapters (ma_co/adapters/)"]
+        CREW["crewai_incident.py\n(Triager -> Investigator -> Reviewer)"]
+        LG["langgraph_reflection.py\n(Bounded StateGraph + Fallback)"]
+        GEN["genai_adapter.py & mongo_store.py"]
     end
 
-    Edge --> Router
-    Router --> Core
-    Core --> Adapters
+    subgraph Backends["Live Cloud vs. Offline Fallback"]
+        LIVE[("Live Providers\n(Bynara / Gemini / MongoDB)")]
+        MOCK[("Deterministic Offline Mode\n(FixtureJudge, CREWAI_MOCK=1)")]
+    end
+
+    U & EV --> MW
+    MW --> PR
+    MW --> MOD --> VAL --> ENG --> STR
+    ENG --> LG
+    U --> CREW
+    ENG -. "Live Mode" .-> GEN -.-> LIVE
+    CREW -. "Live Key" .-> LIVE
+    ENG -. "Default Offline" .-> MOCK
+    CREW -. "CREWAI_MOCK=1" .-> MOCK
 ```
 
-### End-to-End Request Sequence
+### 2. End-to-End Request Sequence
 
 ```mermaid
 sequenceDiagram
+    autonumber
     participant Client
-    participant Middleware
-    participant Router
-    participant Engine as ReflectionEngine
-    participant Judge
-    participant Store
+    participant API as FastAPI Edge (main.py)
+    participant Core as ReflectionEngine + Validators
+    participant Graph as LangGraph / FixtureJudge
+    participant Store as RunStore (JSON / Mongo)
 
-    Client->>Middleware: POST /v1/incidents/triage\n{X-API-Key, Content-Type: application/json}
-    Middleware->>Middleware: hmac auth check → 401 if bad
-    Middleware->>Middleware: rate-limit check → 429 if exceeded
-    Middleware->>Middleware: MIME + size check → 415/413 if bad
-    Middleware->>Router: pass request
-
-    Router->>Router: Pydantic validate IncidentInput → 422 if invalid
-    Router->>Engine: engine.run(incident, draft)
-
-    loop max_regenerations
-        Engine->>Judge: judge.evaluate(incident, draft)
-        Judge-->>Engine: JudgeResult(score, critique, missing_evidence)
-        Engine->>Engine: validate_incident_draft (deterministic)
-        alt score ≥ min_score and no defects
-            Engine->>Engine: status = needs_review / approved_draft
-        else
-            Engine->>Engine: regenerator.regenerate(...)
+    rect rgb(240, 248, 255)
+    Note over Client,Store: Incident Triage Flow (POST /v1/incidents/triage)
+    Client->>API: POST /v1/incidents/triage (IncidentInput JSON)
+    API->>API: Verify Auth (401), Rate Limit (429), MIME (415), Size (413), ID (400)
+    API->>Core: engine.run(incident, initial_draft)
+    loop Up to policy.max_regenerations
+        Core->>Graph: judge.evaluate(incident, draft)
+        Core->>Core: apply_deterministic_veto(validate_incident_draft)
+        alt Score >= min_score and no defects
+            Core-->>API: Status (needs_review or approved_draft)
+        else Retry budget remaining
+            Core->>Graph: regenerator.regenerate(incident, draft, critique)
         end
     end
+    API->>Store: save(immutable RunRecord)
+    API-->>Client: 201 Created (RunRecord) + X-Request-ID & OWASP Headers
+    end
 
-    Engine-->>Router: RunRecord (frozen, immutable)
-    Router->>Store: store.save(record)
-    Router-->>Middleware: RunRecord JSON 201
-    Middleware->>Middleware: attach OWASP headers + X-Request-ID
-    Middleware-->>Client: 201 RunRecord + security headers
+    rect rgb(245, 255, 245)
+    Note over Client,Store: Human Decision Recording (POST /v1/runs/{run_id}/review)
+    Client->>API: POST /v1/runs/{run_id}/review (ApprovalInput)
+    API->>Store: get(run_id)
+    API->>API: Validate Status.NEEDS_REVIEW (else 409)
+    API->>Store: save(record.model_copy(update=decision))
+    API-->>Client: 200 OK (Decision recorded; zero external execution)
+    end
 ```
 
-## Quick Start
+---
+
+## Quickstart
+
+Dependency management is [UV](https://docs.astral.sh/uv/)-based:
 
 ```bash
-# Install
-uv sync --group dev --extra langgraph
+make setup                           # uv sync --group dev
+make check                           # ruff lint + pytest (>=80% cov gate) + eval harness
+make dev                             # uv run uvicorn ma_co.api.main:app --reload
+```
 
-# Verify
-make check         # lint + test (≥80% cov) + eval harness
+### CLI & Smoke Test (`curl`)
 
-# Run
-make dev           # uvicorn on :8000
-
-# Triage an incident
-curl -s -X POST http://127.0.0.1:8000/v1/incidents/triage \
-  -H 'Content-Type: application/json' \
-  -d '{"incident_id":"INC-001","alert":"Elevated errors","evidence":["Prometheus 5xx rate 12%"],"proposed_action":"Review rollback"}'
-
-# CLI (offline)
+```bash
+# Offline CLI triage flow
 uv run python -m ma_co.cli
 
-# CLI (live CrewAI, requires BYNARA_API_KEY)
+# 3-agent CrewAI adapter with offline deterministic mock
 CREWAI_MOCK=1 uv run python -m ma_co.cli --live-crewai
+
+# API smoke test (with server running)
+curl -s http://127.0.0.1:8000/readyz
+curl -s -X POST http://127.0.0.1:8000/v1/incidents/triage \
+  -H "Content-Type: application/json" \
+  -d '{"incident_id":"INC-001","alert":"Elevated 5xx errors","evidence":["Prometheus 5xx rate 12%"],"proposed_action":"Review rollback"}'
 ```
 
-## Configuration
+---
 
-Copy `.env.example` to `.env` and set the values you need.
+## Evaluation & Benchmark Scorecard (`make eval`)
 
-| Variable | Default | Purpose |
-|---|---|---|
-| `API_AUTH_TOKEN` | unset (open) | Enable timing-safe API key auth |
-| `GOOGLE_API_KEY` | — | Live google-genai Judge/Regenerator |
-| `BYNARA_API_KEY` | — | Live CrewAI crew |
-| `MONGO_URI` | — | MongoDB RunStore backend |
-| `RATE_LIMIT_PER_MINUTE` | 120 | Sliding-window rate limit |
-| `MAX_PAYLOAD_BYTES` | 65536 | Request payload size cap |
-| `CREWAI_MOCK` | unset | Set to `1` for offline CrewAI |
+Run `uv run python -m ma_co.eval` to execute the deterministic golden benchmark and write [evaluation/eval_report.json](evaluation/eval_report.json):
 
-## Module Layout
+| Case ID | Status OK | Grounded | Iterations | Latency (ms) |
+|---|---|---|---|---|
+| `EVAL-01-HIGH-5XX` | `True` | `True` | 2 | 32.35 |
+| `EVAL-02-NO-ACTION-APPROVED` | `True` | `True` | 2 | 2.13 |
+| `EVAL-03-MISSING-EVIDENCE` | `True` | `True` | 3 | 2.52 |
 
-```text
-src/ma_co/
-  core/
-    models.py          # Frozen Pydantic DTOs
-    validation.py      # sanitize_identifier, frame_untrusted_text, validate_incident_draft
-    reflection.py      # Judge/Regenerator protocols + ReflectionEngine (immutable)
-    store.py           # Thread-safe atomic JSON RunStore
-  adapters/
-    crewai_incident.py      # 3-agent CrewAI crew (CREWAI_MOCK=1 offline)
-    langgraph_reflection.py # Bounded LangGraph reflection subgraph
-    genai_adapter.py        # google-genai live Judge + Regenerator
-    mongo_store.py          # MongoDB-backed RunStore
-  api/
-    main.py            # FastAPI + security middleware
-  tools/
-    fixtures.py        # Read-only fixture telemetry
-  cli.py               # Offline-default CLI
-  eval.py              # Eval harness → evaluation/eval_report.json
-```
+- **Recall@1 / Policy Accuracy**: `100.0%`
+- **Evidence Grounding Rate**: `100.0%`
+- **Security Guardrail Pass Rate (`415` / `400` / `<untrusted_context>` framing)**: `100.0%`
+- **Latency (`p50` / `p95`)**: `2.52 ms` / `32.35 ms`
 
-## Security
+---
 
-See [SECURITY.md](SECURITY.md) for the full threat model and mitigations.
+## Security Controls & Explicit Limits
 
-## License
+- **Defense-in-Depth**: Timing-safe `API_AUTH_TOKEN` verification (`401`), sliding-window rate limiting (`429`), `1 MB` payload cap (`413`), `application/json` MIME enforcement (`415`), path-traversal rejection (`400`), `<untrusted_context>` prompt-injection framing, OWASP headers, Ruff Bandit (`S`) linting, and non-root Docker execution (`UID 10001`). See [SECURITY.md](SECURITY.md).
+- **Explicit Limits**:
+  - `/v1/runs/{run_id}/review` is a **decision recorder**, not an execution engine; production remediation belongs in a separate authenticated executor service.
+  - Default fixture scores (`FixtureJudge`) are deterministic and synthetic; enable `GenaiJudge` (`GOOGLE_API_KEY`) or `run_crew` (`BYNARA_API_KEY`) for live model evaluation.
 
-MIT
+## Documentation & Governance
+
+- [AGENTS.md](AGENTS.md) & [GEMINI.md](GEMINI.md) — Agent instructions, scoped rules (`.agents/rules/`), and skills (`.agents/skills/`)
+- [PLANNING.md](PLANNING.md) & [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — Detailed architecture, contracts, and design decisions
+- [SECURITY.md](SECURITY.md) — Threat model and security mitigations
+- [CONTRIBUTING.md](CONTRIBUTING.md) & [CHANGELOG.md](CHANGELOG.md) — Contribution workflow and release history

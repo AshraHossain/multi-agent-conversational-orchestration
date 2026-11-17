@@ -1,7 +1,10 @@
-.PHONY: setup lint test eval check dev docker-build
+.PHONY: setup dev lint test eval check docker-build
 
 setup:
-	uv sync --group dev --extra langgraph
+	uv sync --group dev
+
+dev:
+	uv run uvicorn ma_co.api.main:app --reload
 
 lint:
 	uv run ruff check .
@@ -13,9 +16,6 @@ eval:
 	uv run python -m ma_co.eval
 
 check: lint test eval
-
-dev:
-	uv run uvicorn ma_co.api.main:app --reload
 
 docker-build:
 	docker build -t ma-co:latest .

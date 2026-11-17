@@ -1,16 +1,28 @@
 name: CI
-on: [push, pull_request]
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
 jobs:
-  test:
+  verify:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12"]
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
-      - run: uv python install 3.11
-      - run: uv sync --group dev --extra langgraph
-      - name: Lint
-        run: uv run ruff check src tests
-      - name: Test (offline only, 80% coverage gate)
-        run: uv run pytest -m "not live" --cov=ma_co --cov-report=term-missing --cov-fail-under=80
-      - name: Eval harness
-        run: uv run python -m ma_co.eval
+      - run: uv python install ${{ matrix.python-version }}
+      - run: uv sync --group dev
+      - run: uv run ruff check .
+      - run: uv run pytest --cov=ma_co --cov-report=term-missing --cov-fail-under=80
+      - run: uv run python -m ma_co.eval
+
+  docker:
+    runs-on: ubuntu-latest
+    needs: verify
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t ma-co:ci .

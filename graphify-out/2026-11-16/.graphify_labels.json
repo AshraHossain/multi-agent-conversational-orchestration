@@ -1,0 +1,19 @@
+{
+  "0": "models.py",
+  "1": "IncidentInput",
+  "2": "reflection.py",
+  "3": "validate_incident_draft",
+  "4": "crewai_incident.py",
+  "5": "Agent prompts (reviewed and versioned)",
+  "6": "Architecture and component contracts",
+  "7": "Multi-agent conversational orchestration",
+  "8": "DECISIONS.md",
+  "9": "PLAN.md",
+  "10": "PR_DESCRIPTION.md",
+  "11": "multi-agent-conversational-orchestration",
+  "12": "adapters/__init__.py",
+  "13": "api/__init__.py",
+  "14": "core/__init__.py",
+  "15": "ma_co/__init__.py",
+  "16": "tools/__init__.py"
+}

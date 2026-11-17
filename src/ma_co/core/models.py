@@ -1,15 +1,20 @@
+"""Immutable domain contracts and schemas for policy-gated incident triage."""
+
 from datetime import UTC, datetime
-from enum import Enum
+from enum import StrEnum
 from uuid import uuid4
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 def utc_now() -> datetime:
+    """Return the current UTC timestamp."""
     return datetime.now(UTC)
 
 
-class Status(str, Enum):
+class Status(StrEnum):
+    """Terminal and intermediate lifecycle states for an incident triage run."""
+
     APPROVED_DRAFT = "approved_draft"
     NEEDS_REVIEW = "needs_review"
     QUALITY_FAILED = "quality_failed"
@@ -17,6 +22,8 @@ class Status(str, Enum):
 
 
 class Policy(BaseModel):
+    """Deterministic reflection and safety policy constraints."""
+
     model_config = ConfigDict(frozen=True)
 
     max_regenerations: int = Field(default=2, ge=0, le=5)
@@ -27,6 +34,8 @@ class Policy(BaseModel):
 
 
 class IncidentInput(BaseModel):
+    """Validated incident payload submitted for read-only triage."""
+
     model_config = ConfigDict(frozen=True)
 
     incident_id: str = Field(min_length=1, max_length=80)
@@ -36,6 +45,8 @@ class IncidentInput(BaseModel):
 
 
 class JudgeResult(BaseModel):
+    """Structured evaluation outcome from a Judge implementation."""
+
     model_config = ConfigDict(frozen=True)
 
     score: float = Field(ge=0, le=1)
@@ -46,6 +57,8 @@ class JudgeResult(BaseModel):
 
 
 class Iteration(BaseModel):
+    """Immutable record of one evaluate/draft reflection iteration."""
+
     model_config = ConfigDict(frozen=True)
 
     number: int
@@ -55,6 +68,8 @@ class Iteration(BaseModel):
 
 
 class RunRecord(BaseModel):
+    """Immutable persisted record of an incident triage run."""
+
     model_config = ConfigDict(frozen=True)
 
     run_id: str = Field(default_factory=lambda: str(uuid4()))
@@ -70,6 +85,8 @@ class RunRecord(BaseModel):
 
 
 class ApprovalInput(BaseModel):
+    """Human reviewer decision payload for /v1/runs/{run_id}/review."""
+
     model_config = ConfigDict(frozen=True)
 
     approver: str = Field(min_length=2, max_length=100)

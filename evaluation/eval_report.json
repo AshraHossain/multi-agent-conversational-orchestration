@@ -1,10 +1,37 @@
 {
-  "n_runs": 10,
-  "recall_at_1": 1,
-  "recall_at_3": 1,
-  "mean_final_score": 0.9,
+  "total_cases": 3,
+  "recall_at_1": 1.0,
+  "policy_accuracy": 1.0,
   "grounding_rate": 1.0,
+  "evidence_grounding_rate": 1.0,
   "guardrail_pass_rate": 1.0,
-  "latency_p50_ms": 0.02,
-  "latency_p95_ms": 0.04
+  "mean_final_score": 0.7,
+  "latency_p50_ms": 1.91,
+  "latency_p95_ms": 12.56,
+  "cases": [
+    {
+      "case_id": "EVAL-01-HIGH-5XX",
+      "status_ok": true,
+      "grounded": true,
+      "iterations": 2,
+      "final_score": 0.9,
+      "latency_ms": 12.56
+    },
+    {
+      "case_id": "EVAL-02-NO-ACTION-APPROVED",
+      "status_ok": true,
+      "grounded": true,
+      "iterations": 2,
+      "final_score": 0.9,
+      "latency_ms": 1.91
+    },
+    {
+      "case_id": "EVAL-03-MISSING-EVIDENCE",
+      "status_ok": true,
+      "grounded": true,
+      "iterations": 3,
+      "final_score": 0.3,
+      "latency_ms": 1.89
+    }
+  ]
 }
