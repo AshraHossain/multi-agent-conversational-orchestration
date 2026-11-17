@@ -26,6 +26,15 @@ Open a GitHub Security Advisory or email `security@example.com`. Do not open a p
 |---------|-----------|
 | `main` | Yes |
 
+## Accepted Risks and Deployment Notes
+
+| Risk | Decision | Rationale |
+|------|----------|-----------|
+| `API_AUTH_TOKEN` unset = unauthenticated | Intentional opt-in design | Spec requires auth "when `API_AUTH_TOKEN` is set"; unset warns at startup. Set the token in every non-dev deployment. `ALLOW_INSECURE_NO_AUTH=1` documents the explicit dev bypass. |
+| Fail-open (warn, not abort) | Intentional for portfolio demo | A `raise RuntimeError` on startup breaks offline tests. Production deployments must set `API_AUTH_TOKEN`; CI enforces this via `.env.example`. |
+
+**Production checklist:** Set `API_AUTH_TOKEN`, `MONGO_PASSWORD`, `RATE_LIMIT_PER_MINUTE`, and `MAX_PAYLOAD_BYTES` before deploying. Do not set `ALLOW_INSECURE_NO_AUTH=1` in production.
+
 ## Out of Scope
 
 - Denial-of-service at the infrastructure level (Kubernetes/load-balancer responsibility)
