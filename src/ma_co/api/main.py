@@ -54,9 +54,10 @@ def _extract_token(request: Request) -> str:
     return ""
 
 
-def _check_rate_limit(client_key: str, limit_per_minute: int) -> bool:
+def _check_rate_limit(client_key: str, limit_per_minute: int) -> tuple[bool, int]:
+    """Return (allowed, remaining). remaining is after this request is counted."""
     if limit_per_minute <= 0:
-        return True
+        return True, limit_per_minute
     now = time.monotonic()
     cutoff = now - 60.0
     with _rate_lock:
@@ -64,9 +65,9 @@ def _check_rate_limit(client_key: str, limit_per_minute: int) -> bool:
         while window and window[0] < cutoff:
             window.popleft()
         if len(window) >= limit_per_minute:
-            return False
+            return False, 0
         window.append(now)
-        return True
+        return True, max(0, limit_per_minute - len(window))
 
 
 def _attach_security_headers(response: Response, request_id: str, elapsed_ms: float) -> Response:
@@ -80,7 +81,21 @@ def _attach_security_headers(response: Response, request_id: str, elapsed_ms: fl
     return response
 
 
-app = FastAPI(title="Multi-Agent Incident Cockpit", version="0.2.0")
+app = FastAPI(
+    title="Multi-Agent Incident Cockpit",
+    version="0.2.0",
+    description=(
+        "Policy-gated incident triage using a bounded LangGraph reflection loop "
+        "and CrewAI multi-agent drafting. Frozen Pydantic DTOs, timing-safe auth, "
+        "sliding-window rate limiting, and an offline eval harness."
+    ),
+    contact={"name": "Ashrafuzzaman Hossain", "url": "https://github.com/AshraHossain"},
+    license_info={"name": "MIT"},
+    openapi_tags=[
+        {"name": "incidents", "description": "Triage, retrieve, and approve incident run records."},
+        {"name": "probes", "description": "Liveness and readiness probes for orchestrators."},
+    ],
+)
 store = RunStore()
 policy = Policy.model_validate(
     json.loads(Path("policies/default.json").read_text(encoding="utf-8"))
@@ -105,6 +120,8 @@ async def security_and_telemetry_middleware(request: Request, call_next: Any) ->
         return _attach_security_headers(resp, request_id, elapsed_ms)
 
     path = request.url.path
+    limit = int(os.getenv("RATE_LIMIT_PER_MINUTE", str(_DEFAULT_RATE_LIMIT_PER_MINUTE)))
+    remaining = limit
     if path not in _PROBE_PATHS:
         expected_token = os.getenv("API_AUTH_TOKEN", "").strip()
         if expected_token:
@@ -112,13 +129,17 @@ async def security_and_telemetry_middleware(request: Request, call_next: Any) ->
             if not provided or not hmac.compare_digest(provided, expected_token):
                 return _error_response(status.HTTP_401_UNAUTHORIZED, "Unauthorized")
 
-        limit = int(os.getenv("RATE_LIMIT_PER_MINUTE", str(_DEFAULT_RATE_LIMIT_PER_MINUTE)))
         client_host = request.client.host if request.client else "unknown"
-        if not _check_rate_limit(client_host, limit):
+        allowed, remaining = _check_rate_limit(client_host, limit)
+        if not allowed:
             return _error_response(
                 status.HTTP_429_TOO_MANY_REQUESTS,
                 "Rate limit exceeded",
-                extra_headers={"Retry-After": "60"},
+                extra_headers={
+                    "Retry-After": "60",
+                    "X-RateLimit-Limit": str(limit),
+                    "X-RateLimit-Remaining": "0",
+                },
             )
 
         if request.method == "POST":
@@ -142,7 +163,7 @@ async def security_and_telemetry_middleware(request: Request, call_next: Any) ->
             if len(body) > max_bytes:
                 return _error_response(413, "Payload too large")
 
-    response = await call_next(request)
+    response: Response = await call_next(request)
     elapsed_ms = (time.perf_counter() - start) * 1000.0
     log.info(
         "request",
@@ -154,17 +175,21 @@ async def security_and_telemetry_middleware(request: Request, call_next: Any) ->
             "elapsed_ms": round(elapsed_ms, 2),
         },
     )
-    return _attach_security_headers(response, request_id, elapsed_ms)
+    _attach_security_headers(response, request_id, elapsed_ms)
+    if path not in _PROBE_PATHS:
+        response.headers["X-RateLimit-Limit"] = str(limit)
+        response.headers["X-RateLimit-Remaining"] = str(remaining)
+    return response
 
 
-@app.get("/health")
-@app.get("/healthz")
+@app.get("/health", tags=["probes"])
+@app.get("/healthz", tags=["probes"])
 def healthz() -> dict[str, str]:
     """Liveness probe."""
     return {"status": "ok", "version": app.version}
 
 
-@app.get("/readyz")
+@app.get("/readyz", tags=["probes"])
 def readyz() -> dict[str, str]:
     """Readiness probe verifying local store directory accessibility."""
     if not store.directory.exists():
@@ -172,7 +197,12 @@ def readyz() -> dict[str, str]:
     return {"status": "ready"}
 
 
-@app.post("/v1/incidents/triage", response_model=RunRecord, status_code=status.HTTP_201_CREATED)
+@app.post(
+    "/v1/incidents/triage",
+    response_model=RunRecord,
+    status_code=status.HTTP_201_CREATED,
+    tags=["incidents"],
+)
 def triage(incident: IncidentInput) -> RunRecord:
     """Run bounded offline reflection triage and persist the immutable RunRecord."""
     if any(sep in incident.incident_id for sep in ("/", "\\", "..")):
