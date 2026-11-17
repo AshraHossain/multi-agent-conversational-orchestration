@@ -11,3 +11,4 @@ artifacts/
 .claude/settings.local.json
 .claude-flow/
 graphify-out/.graphify_python
+graphify-out/cache/

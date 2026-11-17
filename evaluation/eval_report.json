@@ -1,10 +1,10 @@
 {
-  "n_runs": 2,
+  "n_runs": 10,
   "recall_at_1": 1,
   "recall_at_3": 1,
   "mean_final_score": 0.9,
   "grounding_rate": 1.0,
   "guardrail_pass_rate": 1.0,
-  "latency_p50_ms": 0.06,
-  "latency_p95_ms": 0.06
+  "latency_p50_ms": 0.02,
+  "latency_p95_ms": 0.04
 }
