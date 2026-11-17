@@ -1,12 +1,13 @@
 """Graph owns the bounded loop; action execution is deliberately outside the graph."""
-from typing import TypedDict
+
+from typing import Any, TypedDict
 
 from ma_co.core.models import IncidentInput, Policy
-from ma_co.core.reflection import Judge, Regenerator
+from ma_co.core.reflection import Judge, Regenerator, apply_deterministic_veto
 
 
 class State(TypedDict, total=False):
-    incident: dict
+    incident: dict[str, Any]
     draft: str
     score: float
     critique: str
@@ -15,53 +16,108 @@ class State(TypedDict, total=False):
     regenerations: int
     cost: float
     status: str
-    history: list[dict]
+    history: list[dict[str, Any]]
+
+
+class _FallbackGraph:
+    """Pure-Python fallback when langgraph is not installed."""
+
+    def __init__(self, evaluate, route, regenerate, finish):
+        self._evaluate = evaluate
+        self._route = route
+        self._regenerate = regenerate
+        self._finish = finish
+
+    def invoke(self, initial_state: State) -> State:
+        state: State = dict(initial_state)
+        while True:
+            state.update(self._evaluate(state))
+            if self._route(state) == "stop":
+                state.update(self._finish(state))
+                return state
+            state.update(self._regenerate(state))
 
 
 def build_graph(judge: Judge, regenerator: Regenerator, policy: Policy):
-    from langgraph.graph import END, START, StateGraph
+    """Build a bounded reflection state machine using LangGraph or pure fallback."""
 
-    def evaluate(state: State) -> dict:
+    def evaluate(state: State) -> dict[str, Any]:
         incident = IncidentInput.model_validate(state["incident"])
-        result = judge.evaluate(incident, state["draft"])
-        history = state.get("history", [])[-3:] + [{"score": result.score, "critique": result.critique[:500]}]
-        return {"score": result.score, "critique": result.critique,
-                "missing_evidence": result.missing_evidence, "tool_use_valid": result.tool_use_valid,
-                "cost": state.get("cost", 0) + result.estimated_cost_usd, "history": history}
+        raw_result = judge.evaluate(incident, state["draft"])
+        result = apply_deterministic_veto(incident, state["draft"], raw_result)
+        history = [
+            *state.get("history", [])[-3:],
+            {"score": result.score, "critique": result.critique[:500]},
+        ]
+        return {
+            "score": result.score,
+            "critique": result.critique,
+            "missing_evidence": list(result.missing_evidence),
+            "tool_use_valid": result.tool_use_valid,
+            "cost": state.get("cost", 0.0) + result.estimated_cost_usd,
+            "history": history,
+        }
 
     def route(state: State) -> str:
-        if state.get("cost", 0) > policy.max_estimated_cost_usd:
+        if state.get("cost", 0.0) > policy.max_estimated_cost_usd:
             return "stop"
-        if (state["score"] >= policy.min_score and state["tool_use_valid"]
-                and not state["missing_evidence"]):
+        if (
+            state["score"] >= policy.min_score
+            and state["tool_use_valid"]
+            and not state["missing_evidence"]
+        ):
             return "stop"
         if state.get("regenerations", 0) >= policy.max_regenerations:
             return "stop"
         return "regenerate"
 
-    def regenerate(state: State) -> dict:
-        candidate, cost = regenerator.regenerate(IncidentInput.model_validate(state["incident"]),
-                                                  state["draft"], state["critique"])
+    def regenerate(state: State) -> dict[str, Any]:
+        candidate, cost = regenerator.regenerate(
+            IncidentInput.model_validate(state["incident"]),
+            state["draft"],
+            state["critique"],
+        )
         if cost < 0:
             raise ValueError("Negative cost")
-        return {"draft": candidate, "cost": state.get("cost", 0) + cost,
-                "regenerations": state.get("regenerations", 0) + 1}
+        return {
+            "draft": candidate,
+            "cost": state.get("cost", 0.0) + cost,
+            "regenerations": state.get("regenerations", 0) + 1,
+        }
 
-    def finish(state: State) -> dict:
-        passing = (state.get("cost", 0) <= policy.max_estimated_cost_usd
-                   and state["score"] >= policy.min_score and state["tool_use_valid"]
-                   and not state["missing_evidence"])
+    def finish(state: State) -> dict[str, Any]:
+        cost = state.get("cost", 0.0)
+        if cost > policy.max_estimated_cost_usd:
+            return {"status": "cost_exceeded"}
+        passing = (
+            state["score"] >= policy.min_score
+            and state["tool_use_valid"]
+            and not state["missing_evidence"]
+        )
         incident = IncidentInput.model_validate(state["incident"])
-        return {"status": ("needs_review" if passing and incident.proposed_action
-                            and policy.require_human_approval else "approved_draft" if passing
-                            else "quality_failed")}
+        if passing and incident.proposed_action and policy.require_human_approval:
+            status = "needs_review"
+        elif passing:
+            status = "approved_draft"
+        else:
+            status = "quality_failed"
+        return {"status": status}
+
+    try:
+        from langgraph.graph import END, START, StateGraph
+    except ModuleNotFoundError:
+        return _FallbackGraph(evaluate, route, regenerate, finish)
 
     graph = StateGraph(State)
     graph.add_node("evaluate", evaluate)
     graph.add_node("regenerate", regenerate)
     graph.add_node("finish", finish)
     graph.add_edge(START, "evaluate")
-    graph.add_conditional_edges("evaluate", route, {"regenerate": "regenerate", "stop": "finish"})
+    graph.add_conditional_edges(
+        "evaluate",
+        route,
+        {"regenerate": "regenerate", "stop": "finish"},
+    )
     graph.add_edge("regenerate", "evaluate")
     graph.add_edge("finish", END)
     return graph.compile()

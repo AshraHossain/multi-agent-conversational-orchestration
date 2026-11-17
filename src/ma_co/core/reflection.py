@@ -1,3 +1,5 @@
+"""Bounded reflection engine and deterministic offline fixture doubles."""
+
 from typing import Protocol
 
 from .models import (
@@ -13,10 +15,14 @@ from .validation import validate_incident_draft
 
 
 class Judge(Protocol):
+    """Protocol for evaluating an incident triage draft."""
+
     def evaluate(self, incident: IncidentInput, draft: str) -> JudgeResult: ...
 
 
 class Regenerator(Protocol):
+    """Protocol for revising a draft based on judge critique."""
+
     def regenerate(
         self,
         incident: IncidentInput,
@@ -34,11 +40,13 @@ class FixtureJudge:
         return JudgeResult(
             score=0.9 if has_source else 0.3,
             critique="OK" if has_source else "Cite supplied evidence",
-            missing_evidence=[] if has_source else ["Cite incident evidence"],
+            missing_evidence=() if has_source else ("Cite incident evidence",),
         )
 
 
 class FixtureRegenerator:
+    """Deterministic demo regenerator that injects missing ID and evidence markers."""
+
     def regenerate(
         self,
         incident: IncidentInput,
@@ -60,7 +68,31 @@ class FixtureRegenerator:
         return revised, 0.0
 
 
+def apply_deterministic_veto(
+    incident: IncidentInput,
+    draft: str,
+    result: JudgeResult,
+) -> JudgeResult:
+    """Apply pure deterministic validation defects to a JudgeResult."""
+    defects = validate_incident_draft(incident, draft)
+    if not defects:
+        return result
+    return result.model_copy(
+        update={
+            "score": 0.0,
+            "critique": (
+                result.critique
+                + "\nDeterministic validation failures: "
+                + "; ".join(defects)
+            ),
+            "missing_evidence": (*result.missing_evidence, *defects),
+        }
+    )
+
+
 class ReflectionEngine:
+    """Immutable, bounded reflection loop with deterministic policy gates."""
+
     def __init__(
         self,
         judge: Judge,
@@ -75,51 +107,37 @@ class ReflectionEngine:
         self,
         incident: IncidentInput,
         draft: str,
-        used_tools: set[str] | None = None,
+        used_tools: set[str] | frozenset[str] | None = None,
     ) -> RunRecord:
-        if (used_tools or set()) & self.policy.forbidden_tools:
+        if (used_tools or frozenset()) & self.policy.forbidden_tools:
             raise ValueError("Forbidden tool requested")
 
-        record = RunRecord(incident=incident, draft=draft)
+        current_draft = draft
+        iterations: list[Iteration] = []
+        total_cost = 0.0
         initial_score: float | None = None
+        status = Status.QUALITY_FAILED
+        improvement_delta = 0.0
 
         for number in range(self.policy.max_regenerations + 1):
-            result = self.judge.evaluate(incident, record.draft)
+            raw_result = self.judge.evaluate(incident, current_draft)
+            result = apply_deterministic_veto(incident, current_draft, raw_result)
 
-            # Deterministic defects veto the judge's quality score.
-            defects = validate_incident_draft(incident, record.draft)
-            if defects:
-                result = result.model_copy(
-                    update={
-                        "score": 0.0,
-                        "critique": (
-                            result.critique
-                            + "\nDeterministic validation failures: "
-                            + "; ".join(defects)
-                        ),
-                        "missing_evidence": [
-                            *result.missing_evidence,
-                            *defects,
-                        ],
-                    }
-                )
-
-            record.estimated_cost_usd += result.estimated_cost_usd
-            record.iterations.append(
+            total_cost += result.estimated_cost_usd
+            iterations.append(
                 Iteration(
                     number=number,
-                    draft=record.draft,
+                    draft=current_draft,
                     judge=result,
                 )
             )
 
             if initial_score is None:
                 initial_score = result.score
+            improvement_delta = round(result.score - initial_score, 4)
 
-            record.improvement_delta = round(result.score - initial_score, 4)
-
-            if record.estimated_cost_usd > self.policy.max_estimated_cost_usd:
-                record.status = Status.COST_EXCEEDED
+            if total_cost > self.policy.max_estimated_cost_usd:
+                status = Status.COST_EXCEEDED
                 break
 
             if (
@@ -127,10 +145,11 @@ class ReflectionEngine:
                 and result.tool_use_valid
                 and not result.missing_evidence
             ):
-                if incident.proposed_action and self.policy.require_human_approval:
-                    record.status = Status.NEEDS_REVIEW
-                else:
-                    record.status = Status.APPROVED_DRAFT
+                status = (
+                    Status.NEEDS_REVIEW
+                    if incident.proposed_action and self.policy.require_human_approval
+                    else Status.APPROVED_DRAFT
+                )
                 break
 
             if number == self.policy.max_regenerations:
@@ -138,24 +157,29 @@ class ReflectionEngine:
 
             candidate, estimated_cost = self.regenerator.regenerate(
                 incident,
-                record.draft,
+                current_draft,
                 result.critique,
             )
 
             if estimated_cost < 0:
                 raise ValueError("Negative cost")
 
-            record.estimated_cost_usd += estimated_cost
-
-            if record.estimated_cost_usd > self.policy.max_estimated_cost_usd:
-                record.status = Status.COST_EXCEEDED
+            total_cost += estimated_cost
+            if total_cost > self.policy.max_estimated_cost_usd:
+                status = Status.COST_EXCEEDED
                 break
 
-            if candidate == record.draft:
+            if candidate == current_draft:
                 break
 
-            record.draft = candidate
+            current_draft = candidate
 
-        record.updated_at = utc_now()
-        return record
-        
+        return RunRecord(
+            incident=incident,
+            draft=current_draft,
+            iterations=tuple(iterations),
+            status=status,
+            improvement_delta=improvement_delta,
+            estimated_cost_usd=total_cost,
+            updated_at=utc_now(),
+        )

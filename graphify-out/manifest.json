@@ -12,9 +12,9 @@
     "semantic_hash": ""
   },
   "pyproject.toml": {
-    "mtime": 1790396984.0016322,
-    "seen": 1790401275.873709,
-    "ast_hash": "12be30d5e5e4edf26c89fd498e5ee08b",
+    "mtime": 1794874187.7447016,
+    "seen": 1794874209.310339,
+    "ast_hash": "625de8f9f4bacfa5496b1e4f98cccb0a",
     "semantic_hash": ""
   },
   "src/ma_co/__init__.py": {
@@ -30,15 +30,15 @@
     "semantic_hash": ""
   },
   "src/ma_co/adapters/crewai_incident.py": {
-    "mtime": 1790396984.0019157,
-    "seen": 1790401275.8737102,
-    "ast_hash": "04a9816ab59e30bd454903dfa2105fce",
+    "mtime": 1794874094.4691346,
+    "seen": 1794874209.3103411,
+    "ast_hash": "5e8a5657dfd57e59fc541ae500c721db",
     "semantic_hash": ""
   },
   "src/ma_co/adapters/langgraph_reflection.py": {
-    "mtime": 1790396984.0020266,
-    "seen": 1790401275.873711,
-    "ast_hash": "da879938a1c046408acc9beb22fdfb1b",
+    "mtime": 1794874103.4051883,
+    "seen": 1794874209.310343,
+    "ast_hash": "91470b96bfc141dd41554508b9dcdcb8",
     "semantic_hash": ""
   },
   "src/ma_co/api/__init__.py": {
@@ -48,15 +48,15 @@
     "semantic_hash": ""
   },
   "src/ma_co/api/main.py": {
-    "mtime": 1790396984.0021982,
-    "seen": 1790401275.873711,
-    "ast_hash": "126197aed6ac509244982057ea9d1fe0",
+    "mtime": 1794873795.8753939,
+    "seen": 1794874209.310344,
+    "ast_hash": "45d353da02c0194314e2c33d6544f972",
     "semantic_hash": ""
   },
   "src/ma_co/cli.py": {
-    "mtime": 1790396984.0023293,
-    "seen": 1790401275.873712,
-    "ast_hash": "672ea70fb2e7f381483d8c018072b917",
+    "mtime": 1794873803.3291538,
+    "seen": 1794874209.310345,
+    "ast_hash": "3d82c12175069dab552b3c3732162e5d",
     "semantic_hash": ""
   },
   "src/ma_co/core/__init__.py": {
@@ -66,27 +66,27 @@
     "semantic_hash": ""
   },
   "src/ma_co/core/models.py": {
-    "mtime": 1790396984.0025291,
-    "seen": 1790401275.873712,
-    "ast_hash": "3482a3358452e63cee3c1b96a743cd5e",
+    "mtime": 1794873743.8332064,
+    "seen": 1794874209.310345,
+    "ast_hash": "ab020497d455813c6fe090f746739233",
     "semantic_hash": ""
   },
   "src/ma_co/core/reflection.py": {
-    "mtime": 1790396984.0027204,
-    "seen": 1790401275.8737128,
-    "ast_hash": "de1fd4e2cf8b38807a68b2f9e6408df7",
+    "mtime": 1794874178.2675352,
+    "seen": 1794874209.310346,
+    "ast_hash": "443c263ea8e8c71738f78f47cd16ceb4",
     "semantic_hash": ""
   },
   "src/ma_co/core/store.py": {
-    "mtime": 1790396984.0028803,
-    "seen": 1790401275.8737128,
-    "ast_hash": "3d6ceeca07041dd1e667cba782b01275",
+    "mtime": 1794873757.8947456,
+    "seen": 1794874209.310346,
+    "ast_hash": "fd2c936a507129947792b3caf5752f08",
     "semantic_hash": ""
   },
   "src/ma_co/core/validation.py": {
-    "mtime": 1790396984.003016,
-    "seen": 1790401275.8737128,
-    "ast_hash": "4e719a00ca16a58c88f9e5d2df32143e",
+    "mtime": 1794873752.2778056,
+    "seen": 1794874209.310347,
+    "ast_hash": "e5f830d6341c2e65767342eb4665554e",
     "semantic_hash": ""
   },
   "src/ma_co/tools/__init__.py": {
@@ -96,45 +96,45 @@
     "semantic_hash": ""
   },
   "src/ma_co/tools/fixtures.py": {
-    "mtime": 1790396984.0032306,
-    "seen": 1790401275.873714,
-    "ast_hash": "37f6e5297caa8d45a18fd42f1627896f",
+    "mtime": 1794873993.2573545,
+    "seen": 1794874209.310348,
+    "ast_hash": "da7e0f9c81defc917ad4f8b20db0cfb0",
     "semantic_hash": ""
   },
   "tests/test_api.py": {
-    "mtime": 1790396984.003428,
-    "seen": 1790401275.873714,
-    "ast_hash": "1b07869c5b19731eb254734beceaef27",
+    "mtime": 1794874121.7449594,
+    "seen": 1794874209.3103502,
+    "ast_hash": "bece948fd19b0ef32077dc40b9f8c7f4",
     "semantic_hash": ""
   },
   "tests/test_reflection.py": {
-    "mtime": 1790396984.0036163,
-    "seen": 1790401275.873715,
-    "ast_hash": "90253d634e9e53f1fc1b57498cf768ab",
+    "mtime": 1794874185.717576,
+    "seen": 1794874209.3103511,
+    "ast_hash": "d31e2e5be2700ec7330aa1a2df856752",
     "semantic_hash": ""
   },
   "tests/test_validation.py": {
-    "mtime": 1790396984.0037556,
-    "seen": 1790401275.873715,
-    "ast_hash": "9ba1c420e11c5443e5e82fdb1d79acd8",
+    "mtime": 1794874037.8774526,
+    "seen": 1794874209.3103518,
+    "ast_hash": "65751aae87c4c10d5dd447b869a3f7c7",
     "semantic_hash": ""
   },
   ".github/workflows/ci.yml": {
-    "mtime": 1790396983.9996676,
-    "seen": 1790401275.873715,
-    "ast_hash": "f6b915ed2bf0ab59d17add3266af50b6",
+    "mtime": 1794874061.4548364,
+    "seen": 1794874209.310354,
+    "ast_hash": "fbde81f6cdcb15a267487c8e071da0b8",
     "semantic_hash": ""
   },
   "README.md": {
-    "mtime": 1790396984.0006151,
-    "seen": 1790401275.8737159,
-    "ast_hash": "76d928b9a85600bc64fb602c9439da3f",
+    "mtime": 1794873968.3768632,
+    "seen": 1794874209.310356,
+    "ast_hash": "74ddbe1a1547e82d93cd2813fa0e31cb",
     "semantic_hash": ""
   },
   "docs/ARCHITECTURE.md": {
-    "mtime": 1790396984.0007668,
-    "seen": 1790401275.8737159,
-    "ast_hash": "a768f2ed70cbaeb08ac80f5caee0cf13",
+    "mtime": 1794873986.2468343,
+    "seen": 1794874209.310357,
+    "ast_hash": "fb5169114acc6aa4c7164304f22167cd",
     "semantic_hash": ""
   },
   "docs/DECISIONS.md": {
@@ -149,16 +149,412 @@
     "ast_hash": "24c815220ef4df3e194c129fd847e7b9",
     "semantic_hash": ""
   },
-  "docs/PR_DESCRIPTION.md": {
-    "mtime": 1790396984.0011058,
-    "seen": 1790401275.873717,
-    "ast_hash": "18e8c490dfa097e6ee7fee758e496338",
-    "semantic_hash": ""
-  },
   "prompts/agents.md": {
     "mtime": 1790396984.0015368,
     "seen": 1790401275.873718,
     "ast_hash": "3e178d3588b82f3942ea3abde9a492f1",
     "semantic_hash": ""
+  },
+  "evaluation/eval_report.json": {
+    "mtime": 1794874205.1741784,
+    "seen": 1794874209.310337,
+    "ast_hash": "6df29ef43e71184fbe47fae7e4e4f778",
+    "semantic_hash": ""
+  },
+  "src/ma_co/adapters/genai_adapter.py": {
+    "mtime": 1794874099.8126926,
+    "seen": 1794874209.3103418,
+    "ast_hash": "b8e9032502b2a916d1d1e96d6316fb1b",
+    "semantic_hash": ""
+  },
+  "src/ma_co/adapters/mongo_store.py": {
+    "mtime": 1794873881.8387938,
+    "seen": 1794874209.310343,
+    "ast_hash": "d8de4b4e656fe8bbcb98c8182ee88d80",
+    "semantic_hash": ""
+  },
+  "src/ma_co/eval.py": {
+    "mtime": 1794874144.2275946,
+    "seen": 1794874209.310347,
+    "ast_hash": "3bac0b98ef54fec846ea7888b668de34",
+    "semantic_hash": ""
+  },
+  "tests/conftest.py": {
+    "mtime": 1794874196.5224307,
+    "seen": 1794874209.310349,
+    "ast_hash": "959d5a84793c6147a8fc9ecdabe3cd6b",
+    "semantic_hash": ""
+  },
+  "tests/test_adapters.py": {
+    "mtime": 1794874093.4985409,
+    "seen": 1794874209.310349,
+    "ast_hash": "3d24c10db80b016a91a76cec2f416e51",
+    "semantic_hash": ""
+  },
+  "tests/test_eval.py": {
+    "mtime": 1794874125.0022721,
+    "seen": 1794874209.3103502,
+    "ast_hash": "429e0fe6753fce86791bb1a8785c6de9",
+    "semantic_hash": ""
+  },
+  "tests/test_security.py": {
+    "mtime": 1794874082.803621,
+    "seen": 1794874209.3103511,
+    "ast_hash": "34470a6a78ed60a706f8fd3d6b7f5eb7",
+    "semantic_hash": ""
+  },
+  "tests/test_store.py": {
+    "mtime": 1794874078.3108916,
+    "seen": 1794874209.3103511,
+    "ast_hash": "0c91d6f694378c45e8cda0c73264e065",
+    "semantic_hash": ""
+  },
+  ".claude/rules/api-and-adapters.md": {
+    "mtime": 1794857475.565684,
+    "seen": 1794874209.3103518,
+    "ast_hash": "4b85ee9652e284ed13e4f9eba6e7f400",
+    "semantic_hash": ""
+  },
+  ".claude/rules/tests-and-eval.md": {
+    "mtime": 1794857477.7306497,
+    "seen": 1794874209.3103518,
+    "ast_hash": "f9d8b5771bf555db8d4b4e428bf2f4b9",
+    "semantic_hash": ""
+  },
+  ".claude/rules/triage-core.md": {
+    "mtime": 1794870752.793634,
+    "seen": 1794874209.3103528,
+    "ast_hash": "6cc07b46f93f15f3059a4ae9233ce715",
+    "semantic_hash": ""
+  },
+  ".claude/skills/triage-smoke-test/SKILL.md": {
+    "mtime": 1794772070.6834261,
+    "seen": 1794874209.3103528,
+    "ast_hash": "c4fdd654dc2363c8bebeff8507b03aac",
+    "semantic_hash": ""
+  },
+  ".serena/project.yml": {
+    "mtime": 1790401464.2729447,
+    "seen": 1794874209.310354,
+    "ast_hash": "53963553c9abfc913cd8a4996791ef6f",
+    "semantic_hash": ""
+  },
+  "AGENTS.md": {
+    "mtime": 1794874052.5754964,
+    "seen": 1794874209.310354,
+    "ast_hash": "decefe87c5cea068e1e4de0b89c87832",
+    "semantic_hash": ""
+  },
+  "CLAUDE.md": {
+    "mtime": 1794870752.9398441,
+    "seen": 1794874209.310355,
+    "ast_hash": "d6e43b0c40c79161e29f813062ae8eac",
+    "semantic_hash": ""
+  },
+  "GEMINI.md": {
+    "mtime": 1794870752.985203,
+    "seen": 1794874209.310355,
+    "ast_hash": "afd42c857455794af98e8d590f7d54eb",
+    "semantic_hash": ""
+  },
+  "SECURITY.md": {
+    "mtime": 1794874046.4438825,
+    "seen": 1794874209.310356,
+    "ast_hash": "f4056733e5d7db38475d53cdca58aa0e",
+    "semantic_hash": ""
+  },
+  "docker-compose.yml": {
+    "mtime": 1794873948.8090599,
+    "seen": 1794874209.310357,
+    "ast_hash": "8a30b6aedd9e2cfc01679232350e3f10",
+    "semantic_hash": ""
+  },
+  "/Users/ashraf-macbookair/projects/multi-agent-conversational-orchestration/evaluation/datasets/incident.json": {
+    "mtime": 1790396984.0012703,
+    "seen": 1794881223.925382,
+    "ast_hash": "2d74f527bc91dea118ddea18af4acc84",
+    "semantic_hash": "2d74f527bc91dea118ddea18af4acc84"
+  },
+  "/Users/ashraf-macbookair/projects/multi-agent-conversational-orchestration/evaluation/eval_report.json": {
+    "mtime": 1794881200.0546885,
+    "seen": 1794881223.925384,
+    "ast_hash": "ddc935d6f0811ebad1997cf0d5bb0451",
+    "semantic_hash": "ddc935d6f0811ebad1997cf0d5bb0451"
+  },
+  "/Users/ashraf-macbookair/projects/multi-agent-conversational-orchestration/policies/default.json": {
+    "mtime": 1790396984.0014045,
+    "seen": 1794881223.925385,
+    "ast_hash": "8c757c6aba5bd031a3fae8f90737e552",
+    "semantic_hash": "8c757c6aba5bd031a3fae8f90737e552"
+  },
+  "/Users/ashraf-macbookair/projects/multi-agent-conversational-orchestration/pyproject.toml": {
+    "mtime": 1794880934.7929616,
+    "seen": 1794881223.925386,
+    "ast_hash": "e492e687f54dc79efc7a787c825683bd",
+    "semantic_hash": "e492e687f54dc79efc7a787c825683bd"
+  },
+  "/Users/ashraf-macbookair/projects/multi-agent-conversational-orchestration/src/ma_co/__init__.py": {
+    "mtime": 1790396984.001659,
+    "seen": 1794881223.925386,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "/Users/ashraf-macbookair/projects/multi-agent-conversational-orchestration/src/ma_co/adapters/__init__.py": {
+    "mtime": 1790396984.0017514,
+    "seen": 1794881223.925387,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "/Users/ashraf-macbookair/projects/multi-agent-conversational-orchestration/src/ma_co/adapters/crewai_incident.py": {
+    "mtime": 1794880978.3324327,
+    "seen": 1794881223.925387,
+    "ast_hash": "d6a46dcbe26e8f7a60b7910d8ab69e02",
+    "semantic_hash": "d6a46dcbe26e8f7a60b7910d8ab69e02"
+  },
+  "/Users/ashraf-macbookair/projects/multi-agent-conversational-orchestration/src/ma_co/adapters/genai_adapter.py": {
+    "mtime": 1794874099.8126926,
+    "seen": 1794881223.925387,
+    "ast_hash": "b8e9032502b2a916d1d1e96d6316fb1b",
+    "semantic_hash": "b8e9032502b2a916d1d1e96d6316fb1b"
+  },
+  "/Users/ashraf-macbookair/projects/multi-agent-conversational-orchestration/src/ma_co/adapters/langgraph_reflection.py": {
+    "mtime": 1794880979.7307289,
+    "seen": 1794881223.925388,
+    "ast_hash": "5367452e0aa1344caebc5b67f5ccf3a1",
+    "semantic_hash": "5367452e0aa1344caebc5b67f5ccf3a1"
+  },
+  "/Users/ashraf-macbookair/projects/multi-agent-conversational-orchestration/src/ma_co/adapters/mongo_store.py": {
+    "mtime": 1794873881.8387938,
+    "seen": 1794881223.925388,
+    "ast_hash": "d8de4b4e656fe8bbcb98c8182ee88d80",
+    "semantic_hash": "d8de4b4e656fe8bbcb98c8182ee88d80"
+  },
+  "/Users/ashraf-macbookair/projects/multi-agent-conversational-orchestration/src/ma_co/api/__init__.py": {
+    "mtime": 1790396984.0020537,
+    "seen": 1794881223.925388,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "/Users/ashraf-macbookair/projects/multi-agent-conversational-orchestration/src/ma_co/api/main.py": {
+    "mtime": 1794881087.2001486,
+    "seen": 1794881223.925389,
+    "ast_hash": "8192bffb9209e7e32e8045567e7815eb",
+    "semantic_hash": "8192bffb9209e7e32e8045567e7815eb"
+  },
+  "/Users/ashraf-macbookair/projects/multi-agent-conversational-orchestration/src/ma_co/cli.py": {
+    "mtime": 1794880981.2748766,
+    "seen": 1794881223.925389,
+    "ast_hash": "9aa5ee31cc2b3b8a8737971b7e62ccd2",
+    "semantic_hash": "9aa5ee31cc2b3b8a8737971b7e62ccd2"
+  },
+  "/Users/ashraf-macbookair/projects/multi-agent-conversational-orchestration/src/ma_co/core/__init__.py": {
+    "mtime": 1790396984.0023525,
+    "seen": 1794881223.925389,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "/Users/ashraf-macbookair/projects/multi-agent-conversational-orchestration/src/ma_co/core/models.py": {
+    "mtime": 1794881086.3688827,
+    "seen": 1794881223.92539,
+    "ast_hash": "d4cd3a8ad011e110b5a045925213a0f6",
+    "semantic_hash": "d4cd3a8ad011e110b5a045925213a0f6"
+  },
+  "/Users/ashraf-macbookair/projects/multi-agent-conversational-orchestration/src/ma_co/core/reflection.py": {
+    "mtime": 1794880960.719536,
+    "seen": 1794881223.92539,
+    "ast_hash": "5cf20c57341eff2f4d35b534f3d4977f",
+    "semantic_hash": "5cf20c57341eff2f4d35b534f3d4977f"
+  },
+  "/Users/ashraf-macbookair/projects/multi-agent-conversational-orchestration/src/ma_co/core/store.py": {
+    "mtime": 1794880961.9932985,
+    "seen": 1794881223.92539,
+    "ast_hash": "6aa4959a30a97e29ca0285990721b6d8",
+    "semantic_hash": "6aa4959a30a97e29ca0285990721b6d8"
+  },
+  "/Users/ashraf-macbookair/projects/multi-agent-conversational-orchestration/src/ma_co/core/validation.py": {
+    "mtime": 1794880958.5366912,
+    "seen": 1794881223.9253912,
+    "ast_hash": "8d04e9acc388f61e2ea03115444d5028",
+    "semantic_hash": "8d04e9acc388f61e2ea03115444d5028"
+  },
+  "/Users/ashraf-macbookair/projects/multi-agent-conversational-orchestration/src/ma_co/eval.py": {
+    "mtime": 1794881118.7620509,
+    "seen": 1794881223.9253912,
+    "ast_hash": "349fc17be6449a453036375708dafdbd",
+    "semantic_hash": "349fc17be6449a453036375708dafdbd"
+  },
+  "/Users/ashraf-macbookair/projects/multi-agent-conversational-orchestration/src/ma_co/tools/__init__.py": {
+    "mtime": 1790396984.0030432,
+    "seen": 1794881223.9253912,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "/Users/ashraf-macbookair/projects/multi-agent-conversational-orchestration/src/ma_co/tools/fixtures.py": {
+    "mtime": 1794873993.2573545,
+    "seen": 1794881223.925392,
+    "ast_hash": "da7e0f9c81defc917ad4f8b20db0cfb0",
+    "semantic_hash": "da7e0f9c81defc917ad4f8b20db0cfb0"
+  },
+  "/Users/ashraf-macbookair/projects/multi-agent-conversational-orchestration/tests/conftest.py": {
+    "mtime": 1794874196.5224307,
+    "seen": 1794881223.925392,
+    "ast_hash": "959d5a84793c6147a8fc9ecdabe3cd6b",
+    "semantic_hash": "959d5a84793c6147a8fc9ecdabe3cd6b"
+  },
+  "/Users/ashraf-macbookair/projects/multi-agent-conversational-orchestration/tests/test_adapters.py": {
+    "mtime": 1794881126.9233053,
+    "seen": 1794881223.925392,
+    "ast_hash": "0726a56f95a1bc41515d9d91ce4cacdb",
+    "semantic_hash": "0726a56f95a1bc41515d9d91ce4cacdb"
+  },
+  "/Users/ashraf-macbookair/projects/multi-agent-conversational-orchestration/tests/test_api.py": {
+    "mtime": 1794881137.678255,
+    "seen": 1794881223.9253929,
+    "ast_hash": "000e757d67d45d824eb34e19a2ae6cba",
+    "semantic_hash": "000e757d67d45d824eb34e19a2ae6cba"
+  },
+  "/Users/ashraf-macbookair/projects/multi-agent-conversational-orchestration/tests/test_eval.py": {
+    "mtime": 1794874125.0022721,
+    "seen": 1794881223.9253929,
+    "ast_hash": "429e0fe6753fce86791bb1a8785c6de9",
+    "semantic_hash": "429e0fe6753fce86791bb1a8785c6de9"
+  },
+  "/Users/ashraf-macbookair/projects/multi-agent-conversational-orchestration/tests/test_reflection.py": {
+    "mtime": 1794881096.8978548,
+    "seen": 1794881223.9253929,
+    "ast_hash": "ea77ac81f9fc61661979dcd56293ae78",
+    "semantic_hash": "ea77ac81f9fc61661979dcd56293ae78"
+  },
+  "/Users/ashraf-macbookair/projects/multi-agent-conversational-orchestration/tests/test_security.py": {
+    "mtime": 1794874082.803621,
+    "seen": 1794881223.9253938,
+    "ast_hash": "34470a6a78ed60a706f8fd3d6b7f5eb7",
+    "semantic_hash": "34470a6a78ed60a706f8fd3d6b7f5eb7"
+  },
+  "/Users/ashraf-macbookair/projects/multi-agent-conversational-orchestration/tests/test_store.py": {
+    "mtime": 1794874078.3108916,
+    "seen": 1794881223.9253938,
+    "ast_hash": "0c91d6f694378c45e8cda0c73264e065",
+    "semantic_hash": "0c91d6f694378c45e8cda0c73264e065"
+  },
+  "/Users/ashraf-macbookair/projects/multi-agent-conversational-orchestration/tests/test_validation.py": {
+    "mtime": 1794881070.4615712,
+    "seen": 1794881223.9253938,
+    "ast_hash": "138711568faaf6116ee160b9854ac39a",
+    "semantic_hash": "138711568faaf6116ee160b9854ac39a"
+  },
+  "/Users/ashraf-macbookair/projects/multi-agent-conversational-orchestration/.claude/rules/api-and-adapters.md": {
+    "mtime": 1794857475.565684,
+    "seen": 1794881223.925395,
+    "ast_hash": "4b85ee9652e284ed13e4f9eba6e7f400",
+    "semantic_hash": "4b85ee9652e284ed13e4f9eba6e7f400"
+  },
+  "/Users/ashraf-macbookair/projects/multi-agent-conversational-orchestration/.claude/rules/tests-and-eval.md": {
+    "mtime": 1794857477.7306497,
+    "seen": 1794881223.925395,
+    "ast_hash": "f9d8b5771bf555db8d4b4e428bf2f4b9",
+    "semantic_hash": "f9d8b5771bf555db8d4b4e428bf2f4b9"
+  },
+  "/Users/ashraf-macbookair/projects/multi-agent-conversational-orchestration/.claude/rules/triage-core.md": {
+    "mtime": 1794870752.793634,
+    "seen": 1794881223.925395,
+    "ast_hash": "6cc07b46f93f15f3059a4ae9233ce715",
+    "semantic_hash": "6cc07b46f93f15f3059a4ae9233ce715"
+  },
+  "/Users/ashraf-macbookair/projects/multi-agent-conversational-orchestration/.claude/skills/triage-smoke-test/SKILL.md": {
+    "mtime": 1794880933.7216067,
+    "seen": 1794881223.925396,
+    "ast_hash": "ad9c8eeb0279d40f3142d90d1368d2a0",
+    "semantic_hash": "ad9c8eeb0279d40f3142d90d1368d2a0"
+  },
+  "/Users/ashraf-macbookair/projects/multi-agent-conversational-orchestration/.github/workflows/ci.yml": {
+    "mtime": 1794881164.9075532,
+    "seen": 1794881223.925396,
+    "ast_hash": "73c00ee632acb484859621414bb87585",
+    "semantic_hash": "73c00ee632acb484859621414bb87585"
+  },
+  "/Users/ashraf-macbookair/projects/multi-agent-conversational-orchestration/.serena/project.yml": {
+    "mtime": 1790401464.2729447,
+    "seen": 1794881223.925396,
+    "ast_hash": "53963553c9abfc913cd8a4996791ef6f",
+    "semantic_hash": "53963553c9abfc913cd8a4996791ef6f"
+  },
+  "/Users/ashraf-macbookair/projects/multi-agent-conversational-orchestration/AGENTS.md": {
+    "mtime": 1794874052.5754964,
+    "seen": 1794881223.925397,
+    "ast_hash": "decefe87c5cea068e1e4de0b89c87832",
+    "semantic_hash": "decefe87c5cea068e1e4de0b89c87832"
+  },
+  "/Users/ashraf-macbookair/projects/multi-agent-conversational-orchestration/CHANGELOG.md": {
+    "mtime": 1794881168.9593585,
+    "seen": 1794881223.925397,
+    "ast_hash": "2bdc64bc94d3f5a0a98ec012ff0030da",
+    "semantic_hash": "2bdc64bc94d3f5a0a98ec012ff0030da"
+  },
+  "/Users/ashraf-macbookair/projects/multi-agent-conversational-orchestration/CLAUDE.md": {
+    "mtime": 1794870752.9398441,
+    "seen": 1794881223.925397,
+    "ast_hash": "d6e43b0c40c79161e29f813062ae8eac",
+    "semantic_hash": "d6e43b0c40c79161e29f813062ae8eac"
+  },
+  "/Users/ashraf-macbookair/projects/multi-agent-conversational-orchestration/CONTRIBUTING.md": {
+    "mtime": 1794881167.5825257,
+    "seen": 1794881223.925398,
+    "ast_hash": "c884bd234a8aab8a6d1525dd27a21963",
+    "semantic_hash": "c884bd234a8aab8a6d1525dd27a21963"
+  },
+  "/Users/ashraf-macbookair/projects/multi-agent-conversational-orchestration/GEMINI.md": {
+    "mtime": 1794870752.985203,
+    "seen": 1794881223.925398,
+    "ast_hash": "afd42c857455794af98e8d590f7d54eb",
+    "semantic_hash": "afd42c857455794af98e8d590f7d54eb"
+  },
+  "/Users/ashraf-macbookair/projects/multi-agent-conversational-orchestration/PLANNING.md": {
+    "mtime": 1794881194.011787,
+    "seen": 1794881223.925398,
+    "ast_hash": "df211dd949b9e035142c3dbc98e08a47",
+    "semantic_hash": "df211dd949b9e035142c3dbc98e08a47"
+  },
+  "/Users/ashraf-macbookair/projects/multi-agent-conversational-orchestration/README.md": {
+    "mtime": 1794881192.5994396,
+    "seen": 1794881223.9254,
+    "ast_hash": "bb1392ff616c51e5629a02c89ab0f336",
+    "semantic_hash": "bb1392ff616c51e5629a02c89ab0f336"
+  },
+  "/Users/ashraf-macbookair/projects/multi-agent-conversational-orchestration/SECURITY.md": {
+    "mtime": 1794881166.1989856,
+    "seen": 1794881223.9254,
+    "ast_hash": "b6c053c7dfda98cbc84f493e951813dd",
+    "semantic_hash": "b6c053c7dfda98cbc84f493e951813dd"
+  },
+  "/Users/ashraf-macbookair/projects/multi-agent-conversational-orchestration/docker-compose.yml": {
+    "mtime": 1794881162.2400742,
+    "seen": 1794881223.925401,
+    "ast_hash": "923327cb1860c2efbb172d84c59c0e33",
+    "semantic_hash": "923327cb1860c2efbb172d84c59c0e33"
+  },
+  "/Users/ashraf-macbookair/projects/multi-agent-conversational-orchestration/docs/ARCHITECTURE.md": {
+    "mtime": 1794873986.2468343,
+    "seen": 1794881223.925401,
+    "ast_hash": "fb5169114acc6aa4c7164304f22167cd",
+    "semantic_hash": "fb5169114acc6aa4c7164304f22167cd"
+  },
+  "/Users/ashraf-macbookair/projects/multi-agent-conversational-orchestration/docs/DECISIONS.md": {
+    "mtime": 1790396984.000881,
+    "seen": 1794881223.925401,
+    "ast_hash": "8c0dfe4ae89f941c16ad632b5b3125a1",
+    "semantic_hash": "8c0dfe4ae89f941c16ad632b5b3125a1"
+  },
+  "/Users/ashraf-macbookair/projects/multi-agent-conversational-orchestration/docs/PLAN.md": {
+    "mtime": 1790396984.0009906,
+    "seen": 1794881223.9254022,
+    "ast_hash": "24c815220ef4df3e194c129fd847e7b9",
+    "semantic_hash": "24c815220ef4df3e194c129fd847e7b9"
+  },
+  "/Users/ashraf-macbookair/projects/multi-agent-conversational-orchestration/prompts/agents.md": {
+    "mtime": 1790396984.0015368,
+    "seen": 1794881223.9254022,
+    "ast_hash": "3e178d3588b82f3942ea3abde9a492f1",
+    "semantic_hash": "3e178d3588b82f3942ea3abde9a492f1"
   }
 }
