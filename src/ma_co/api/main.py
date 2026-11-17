@@ -33,6 +33,15 @@ _API_AUTH_TOKEN: str | None = os.getenv("API_AUTH_TOKEN")
 _RATE_LIMIT = int(os.getenv("RATE_LIMIT_PER_MINUTE", "120"))
 _MAX_PAYLOAD = int(os.getenv("MAX_PAYLOAD_BYTES", str(64 * 1024)))  # 64 KB
 
+# Fail closed: require auth token in production unless explicitly opted out for local dev.
+if not _API_AUTH_TOKEN and os.getenv("ALLOW_INSECURE_NO_AUTH") != "1":
+    import warnings
+    warnings.warn(
+        "API_AUTH_TOKEN is not set. All endpoints are unauthenticated. "
+        "Set API_AUTH_TOKEN or ALLOW_INSECURE_NO_AUTH=1 to suppress this warning.",
+        stacklevel=1,
+    )
+
 # ---------------------------------------------------------------------------
 # Sliding-window rate limiter (per-process, per-IP)
 # ---------------------------------------------------------------------------
