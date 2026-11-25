@@ -1,12 +1,12 @@
 # Multi-Agent Conversational Orchestration (`ma_co`)
 
 [![CI](https://github.com/AshraHossain/multi-agent-conversational-orchestration/actions/workflows/ci.yml/badge.svg)](https://github.com/AshraHossain/multi-agent-conversational-orchestration/actions)
-![Coverage](https://img.shields.io/badge/coverage-94%25-brightgreen)
+![Coverage](https://img.shields.io/badge/branch%20coverage-93%25-brightgreen)
 ![Python](https://img.shields.io/badge/python-3.11%20%7C%203.12-blue)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.115%2B-009688)
 ![CrewAI & LangGraph](https://img.shields.io/badge/Orchestration-CrewAI%20%2B%20LangGraph-4F46E5)
 
-An enterprise incident-response orchestration service that combines a read-only three-agent **CrewAI** crew (`Triager -> Investigator -> Safety Reviewer`), a bounded **LangGraph** reflection state machine, and a deterministic **SRAF-style policy & quality gate engine** behind a hardened **FastAPI** API. All default runs execute 100% offline with deterministic fixtures (`CREWAI_MOCK=1`), immutable Pydantic contracts, and strict human-in-the-loop approval boundaries — agents never execute live rollbacks, deployments, or emails.
+An enterprise incident-response orchestration service that combines a read-only three-agent **CrewAI** crew (`Triager -> Investigator -> Safety Reviewer`), a bounded **LangGraph** reflection state machine, and a deterministic **SRAF-style policy & quality gate engine** behind a hardened **FastAPI** API. All default runs execute 100% offline with framework-free frozen `contracts/`, pure deterministic `core/`, AST-enforced layering invariants, and a 3-tier evaluation & red-team harness — agents never execute live rollbacks, deployments, or emails.
 
 ---
 
@@ -18,7 +18,7 @@ An enterprise incident-response orchestration service that combines a read-only 
 flowchart LR
     subgraph Client["Client & CI Surface"]
         U["REST Client / CLI"]
-        EV["Eval Harness\n(ma_co.eval)"]
+        EV["3-Tier Eval Harness\n(ma_co.eval)"]
     end
 
     subgraph Edge["FastAPI Edge & Guardrails (api/main.py)"]
@@ -26,8 +26,11 @@ flowchart LR
         PR["Liveness & Readiness\n(/health, /healthz, /readyz)"]
     end
 
+    subgraph Contracts["Frozen Contracts (ma_co/contracts/)"]
+        DTO["ConfigDict(frozen=True)\n(IncidentInput, Policy, RunRecord, ApprovalInput)"]
+    end
+
     subgraph Core["Deterministic Pure Core (ma_co/core/)"]
-        MOD["Frozen DTOs\n(ConfigDict frozen=True)"]
         VAL["Pure Validators & Framing\n(validate_incident_draft, untrusted_context)"]
         ENG["ReflectionEngine\n(Bounded Retries & Cost Caps)"]
         STR["RunStore\n(Atomic JSON + Path Guard)"]
@@ -46,7 +49,7 @@ flowchart LR
 
     U & EV --> MW
     MW --> PR
-    MW --> MOD --> VAL --> ENG --> STR
+    MW --> DTO --> VAL --> ENG --> STR
     ENG --> LG
     U --> CREW
     ENG -. "Live Mode" .-> GEN -.-> LIVE
@@ -55,7 +58,26 @@ flowchart LR
     CREW -. "CREWAI_MOCK=1" .-> MOCK
 ```
 
-### 2. End-to-End Request Sequence
+### 2. Multi-Agent & Bounded Reflection Orchestration
+
+```mermaid
+flowchart TD
+    IN["Untrusted IncidentInput\n(Wrapped in untrusted_context)"] --> T["Triager Agent\n(Read-only signal tool)"]
+    T --> I["Investigator Agent\n(Read-only signal tool)"]
+    I --> R["Safety Reviewer Agent\n(Zero tools, critique only)"]
+    R --> E["Evaluate Node\n(Judge + apply_deterministic_veto)"]
+    E --> C{"Cost > Cap?"}
+    C -- "yes" --> CE["Status.COST_EXCEEDED"]
+    C -- "no" --> Q{"Score >= min_score\nand 0 Defects?"}
+    Q -- "yes" --> H{"Proposed Action +\nHuman Approval?"}
+    H -- "yes" --> NR["Status.NEEDS_REVIEW\n(Human /review only)"]
+    H -- "no" --> AP["Status.APPROVED_DRAFT"]
+    Q -- "no" --> B{"Retries Remaining?"}
+    B -- "yes" --> RG["Regenerate Draft\n(Bounded cost)"] --> E
+    B -- "no" --> QF["Status.QUALITY_FAILED"]
+```
+
+### 3. End-to-End Request Sequence
 
 ```mermaid
 sequenceDiagram
@@ -102,7 +124,7 @@ Dependency management is [UV](https://docs.astral.sh/uv/)-based:
 
 ```bash
 make setup                           # uv sync --group dev
-make check                           # ruff lint + pytest (>=80% cov gate) + eval harness
+make check                           # ruff check/format + mypy + pytest (branch cov >=80%) + 3-tier eval
 make dev                             # uv run uvicorn ma_co.api.main:app --reload
 ```
 
@@ -115,6 +137,9 @@ uv run python -m ma_co.cli
 # 3-agent CrewAI adapter with offline deterministic mock
 CREWAI_MOCK=1 uv run python -m ma_co.cli --live-crewai
 
+# 3-tier evaluation & red-team matrix (3 repetitions)
+uv run python -m ma_co.eval --guardrails --verifier-matrix --repeat 3
+
 # API smoke test (with server running)
 curl -s http://127.0.0.1:8000/readyz
 curl -s -X POST http://127.0.0.1:8000/v1/incidents/triage \
@@ -124,33 +149,34 @@ curl -s -X POST http://127.0.0.1:8000/v1/incidents/triage \
 
 ---
 
-## Evaluation & Benchmark Scorecard (`make eval`)
+## 3-Tier Evaluation & Red-Team Scorecard (`make eval`)
 
-Run `uv run python -m ma_co.eval` to execute the deterministic golden benchmark and write [evaluation/eval_report.json](evaluation/eval_report.json):
+Run `uv run python -m ma_co.eval --guardrails --verifier-matrix --repeat 3` to execute the offline golden benchmark (`main` + `heldout` splits), 10 guardrail perturbations, and the deterministic verifier red-team matrix ([evaluation/eval_report.json](evaluation/eval_report.json)):
 
-| Case ID | Status OK | Grounded | Iterations | Latency (ms) |
-|---|---|---|---|---|
-| `EVAL-01-HIGH-5XX` | `True` | `True` | 2 | 32.35 |
-| `EVAL-02-NO-ACTION-APPROVED` | `True` | `True` | 2 | 2.13 |
-| `EVAL-03-MISSING-EVIDENCE` | `True` | `True` | 3 | 2.52 |
+| Case ID | Split | Status OK | Grounded | Compliance (`--repeat 3`) | Iterations |
+|---|---|---|---|---|---|
+| `EVAL-01-HIGH-5XX` | `main` | `True` | `True` | `3/3` | 2 |
+| `EVAL-02-NO-ACTION-APPROVED` | `main` | `True` | `True` | `3/3` | 2 |
+| `EVAL-03-MISSING-EVIDENCE` | `main` | `True` | `True` | `3/3` | 3 |
+| `EVAL-04-HELDOUT-DB-POOL` | `heldout` | `True` | `True` | `3/3` | 2 |
+| `EVAL-05-HELDOUT-OBSERVATION-ONLY` | `heldout` | `True` | `True` | `3/3` | 2 |
 
-- **Recall@1 / Policy Accuracy**: `100.0%`
-- **Evidence Grounding Rate**: `100.0%`
-- **Security Guardrail Pass Rate (`415` / `400` / `<untrusted_context>` framing)**: `100.0%`
-- **Latency (`p50` / `p95`)**: `2.52 ms` / `32.35 ms`
+- **Tier 1 — Policy Accuracy & Grounding (`--repeat 3`)**: `100.0%` (`stdev: 0.0`), **10/10** security & policy guardrail perturbations blocked (`401`, `413`, `415`, `429`, `400`, `<untrusted_context>` escape, forbidden tool, spoofed ID, evidence denial).
+- **Tier 2 — Verifier Red-Team Matrix (`--verifier-matrix`)**: **14/14** planted defects caught (`100.0%`), **0/5** false positives on clean drafts. Known deterministic blind spots (`paraphrased_certainty`, `subtle_causal_overclaim`) are documented for live semantic review.
+- **Latency (`p50` / `p95`, offline mock)**: `1.39 ms` / `6.84 ms`.
 
 ---
 
 ## Security Controls & Explicit Limits
 
-- **Defense-in-Depth**: Timing-safe `API_AUTH_TOKEN` verification (`401`), sliding-window rate limiting (`429`), `1 MB` payload cap (`413`), `application/json` MIME enforcement (`415`), path-traversal rejection (`400`), `<untrusted_context>` prompt-injection framing, OWASP headers, Ruff Bandit (`S`) linting, and non-root Docker execution (`UID 10001`). See [SECURITY.md](SECURITY.md).
+- **Defense-in-Depth**: Timing-safe `API_AUTH_TOKEN` verification (`401`), sliding-window rate limiting (`429`), `1 MB` payload cap (`413`), `application/json` MIME enforcement (`415`), path-traversal rejection (`400`), `<untrusted_context>` prompt-injection framing, OWASP headers, Ruff Bandit (`S`) + `SIM`/`RUF` linting, AST layering invariant tests, and non-root Docker execution (`UID 10001`). See [SECURITY.md](SECURITY.md).
 - **Explicit Limits**:
   - `/v1/runs/{run_id}/review` is a **decision recorder**, not an execution engine; production remediation belongs in a separate authenticated executor service.
   - Default fixture scores (`FixtureJudge`) are deterministic and synthetic; enable `GenaiJudge` (`GOOGLE_API_KEY`) or `run_crew` (`BYNARA_API_KEY`) for live model evaluation.
 
 ## Documentation & Governance
 
-- [AGENTS.md](AGENTS.md) & [GEMINI.md](GEMINI.md) — Agent instructions, scoped rules (`.agents/rules/`), and skills (`.agents/skills/`)
-- [PLANNING.md](PLANNING.md) & [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — Detailed architecture, contracts, and design decisions
-- [SECURITY.md](SECURITY.md) — Threat model and security mitigations
-- [CONTRIBUTING.md](CONTRIBUTING.md) & [CHANGELOG.md](CHANGELOG.md) — Contribution workflow and release history
+- [AGENTS.md](AGENTS.md), [GEMINI.md](GEMINI.md) & [CLAUDE.md](CLAUDE.md) — Agent instructions, scoped rules (`.agents/rules/`), and skills (`.agents/skills/`)
+- [PLANNING.md](PLANNING.md), [PLAN.md](PLAN.md), [TASK.md](TASK.md) & [docs/adr/](docs/adr/) — GSD → Superpowers → Ruflo planning workflow, roadmap, backlog, and ADRs
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) & [graphify-out/GRAPH_REPORT.md](graphify-out/GRAPH_REPORT.md) — Component contracts and structural knowledge graph
+- [SECURITY.md](SECURITY.md), [CONTRIBUTING.md](CONTRIBUTING.md) & [CHANGELOG.md](CHANGELOG.md) — Threat model, TDD workflow, and release history

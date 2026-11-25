@@ -1,63 +1,40 @@
-# Architecture & Planning (`ma_co`)
+# Planning — `multi-agent-conversational-orchestration` (`ma_co`)
 
-## Design Principles
+How work is planned and verified in this repository.
 
-1. **Deterministic Core vs. AI Layering**: Policy caps (`max_regenerations`, `max_estimated_cost_usd`, `forbidden_tools`), draft validation (`validate_incident_draft`), identifier sanitization (`sanitize_identifier`), and prompt-injection framing (`frame_untrusted_text`) live in pure Python functions under `src/ma_co/core/`.
-2. **Immutability**: All Pydantic DTOs in `src/ma_co/core/models.py` use `ConfigDict(frozen=True)`. State transitions in `ReflectionEngine` and `/v1/runs/{run_id}/review` construct new records via `model_copy(update=...)`.
-3. **Read-Only Triage Boundary**: Neither CrewAI agents nor the FastAPI `/review` endpoint can trigger rollbacks, deployments, or external notifications.
-4. **Offline-First Verification**: All unit, integration, security, and evaluation tests run 100% offline (`CREWAI_MOCK=1` and `FixtureJudge`/`FixtureRegenerator`), while live provider tests are isolated behind `@pytest.mark.live`.
+| What | Where |
+|---|---|
+| Design rationale, layered contracts, phase status | [PLAN.md](PLAN.md), [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), [docs/adr/](docs/adr/) |
+| Live backlog (done / next) | [TASK.md](TASK.md) |
+| Agent rules & repeatable procedures | [AGENTS.md](AGENTS.md), `.agents/rules/`, `.agents/skills/` |
+| Structural dependency map | [graphify-out/GRAPH_REPORT.md](graphify-out/GRAPH_REPORT.md) |
 
-## Layered Architecture (`flowchart LR`)
+## Workflow: GSD → Superpowers → Ruflo
+
+Every non-trivial change (new agent, tool, contract change, security guardrail, or eval tier) goes through three layers. Trivial one-line fixes with a test skip directly to execution.
+
+| Layer | Tool | Owns | Output |
+|---|---|---|---|
+| **Roadmap** | **GSD** (Get Shit Done) | Milestones and phases | `TASK.md` + `PLAN.md` phase table |
+| **Task Plan** | **Superpowers** | Design and step-by-step plan for one phase | `brainstorming` → `writing-plans` |
+| **Execution** | **Ruflo** / TDD | Parallel disjoint builders or sequential TDD (`RED → GREEN → IMPROVE`) | Verified commits + `make check` |
 
 ```mermaid
 flowchart LR
-    subgraph Client["Client & CI Surface"]
-        CLI["CLI (ma_co.cli)"]
-        API_C["HTTP Clients / Eval"]
-    end
-    subgraph Edge["Edge & Guardrails"]
-        MW["Auth (401) + Rate Limit (429) + Size (413) + MIME (415)"]
-    end
-    subgraph Core["Deterministic Pure Core"]
-        VAL["validation.py"]
-        REF["reflection.py"]
-        STR["store.py"]
-    end
-    subgraph Adapters["Isolated Adapters"]
-        CRW["crewai_incident.py"]
-        LGR["langgraph_reflection.py"]
-        GEN["genai_adapter.py"]
-        MGO["mongo_store.py"]
-    end
-    CLI & API_C --> MW --> VAL --> REF --> STR
-    REF --> LGR
-    CLI --> CRW
-    REF -. "Live" .-> GEN
-    STR -. "Live" .-> MGO
+    G["GSD: Next Phase\n(PLAN.md + TASK.md)"] --> B["Superpowers: Brainstorming"]
+    B --> P["Superpowers: Writing Plans\n(Files, Tests, Acceptance)"]
+    P --> R{"Independent Tasks?"}
+    R -- "yes" --> T["Ruflo / Parallel Builders\n(Disjoint Files + Verifier)"]
+    R -- "no" --> E["Executing Plans + TDD\n(RED -> GREEN -> IMPROVE)"]
+    T --> V["Verification Before Completion\n(make check)"]
+    E --> V
+    V --> C["Code Review -> Merge\n(Update TASK.md, PLAN.md, graphify-out/)"]
 ```
 
-## Runtime Sequence (`sequenceDiagram`)
+## Rules for Every Plan
 
-```mermaid
-sequenceDiagram
-    autonumber
-    participant Caller
-    participant FastAPI as api/main.py
-    participant Engine as core/reflection.py
-    participant Validator as core/validation.py
-    participant Store as core/store.py
-
-    Caller->>FastAPI: POST /v1/incidents/triage
-    FastAPI->>Validator: sanitize_identifier(incident_id)
-    FastAPI->>Engine: run(incident, initial_draft)
-    Engine->>Validator: apply_deterministic_veto(incident, draft)
-    Engine-->>FastAPI: Immutable RunRecord
-    FastAPI->>Store: save(RunRecord)
-    FastAPI-->>Caller: 201 Created + OWASP Headers
-```
-
-## References
-
-- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — Component contracts and tool schemas
-- [docs/DECISIONS.md](docs/DECISIONS.md) — CrewAI and LangGraph orchestration rationale
-- [docs/PLAN.md](docs/PLAN.md) — Four-week implementation milestones
+1. Every step names explicit files, tests, and the acceptance command (`make check`).
+2. Thresholds, policy caps, validation vetoes, and prompt-injection framing live in pure Python under `src/ma_co/contracts/` and `src/ma_co/core/` — never in prompts.
+3. All default tests and evaluations run 100% offline with branch coverage enabled (`branch = true`, `>=80%` floor) and zero skipped offline tests.
+4. Live provider runs (`BYNARA_API_KEY`, `GOOGLE_API_KEY`) spend tokens: get explicit approval first and isolate them behind `@pytest.mark.live`.
+5. Refresh `graphify-out/` locally after module additions or phase merges so agents and reviewers share an up-to-date dependency map.

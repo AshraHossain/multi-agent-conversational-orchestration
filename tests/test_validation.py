@@ -59,8 +59,7 @@ def test_evidence_marker_cannot_override_defects() -> None:
         Policy(max_regenerations=1),
     ).run(
         sample_incident(),
-        "Incident ID: WRONG\nNo fixture evidence was available.\n"
-        "Evidence: Prometheus: 12%",
+        "Incident ID: WRONG\nNo fixture evidence was available.\nEvidence: Prometheus: 12%",
     )
 
     assert record.status == Status.QUALITY_FAILED

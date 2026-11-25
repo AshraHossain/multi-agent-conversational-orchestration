@@ -18,6 +18,7 @@ def _make_client(token: str | None = None, rate_limit: int = 120):
         import importlib
 
         import ma_co.api.main as mod
+
         importlib.reload(mod)
         return TestClient(mod.app, raise_server_exceptions=False), mod.app
 
@@ -29,6 +30,7 @@ def test_no_auth_token_allows_all():
         import importlib
 
         import ma_co.api.main as mod
+
         importlib.reload(mod)
         client = TestClient(mod.app, raise_server_exceptions=False)
         r = client.post(
@@ -50,6 +52,7 @@ def test_valid_token_passes():
         import importlib
 
         import ma_co.api.main as mod
+
         importlib.reload(mod)
         client = TestClient(mod.app, raise_server_exceptions=False)
         r = client.post(
@@ -72,6 +75,7 @@ def test_wrong_token_401():
         import importlib
 
         import ma_co.api.main as mod
+
         importlib.reload(mod)
         client = TestClient(mod.app, raise_server_exceptions=False)
         r = client.post(
@@ -89,6 +93,7 @@ def test_missing_token_401():
         import importlib
 
         import ma_co.api.main as mod
+
         importlib.reload(mod)
         client = TestClient(mod.app, raise_server_exceptions=False)
         r = client.post(
@@ -105,6 +110,7 @@ def test_probe_bypasses_auth():
         import importlib
 
         import ma_co.api.main as mod
+
         importlib.reload(mod)
         client = TestClient(mod.app, raise_server_exceptions=False)
         for path in ("/health", "/healthz", "/readyz"):
@@ -118,6 +124,7 @@ def test_wrong_content_type_415():
         import importlib
 
         import ma_co.api.main as mod
+
         importlib.reload(mod)
         client = TestClient(mod.app, raise_server_exceptions=False)
         r = client.post(
@@ -136,13 +143,16 @@ def test_oversized_payload_413():
         import importlib
 
         import ma_co.api.main as mod
+
         importlib.reload(mod)
         client = TestClient(mod.app, raise_server_exceptions=False)
         r = client.post(
             "/v1/incidents/triage",
             json={
-                "incident_id": "S-005", "alert": "x" * 200,
-                "evidence": [], "proposed_action": "x",
+                "incident_id": "S-005",
+                "alert": "x" * 200,
+                "evidence": [],
+                "proposed_action": "x",
             },
         )
         assert r.status_code == 413
@@ -156,6 +166,7 @@ def test_rate_limit_429():
         import importlib
 
         import ma_co.api.main as mod
+
         importlib.reload(mod)
         client = TestClient(mod.app, raise_server_exceptions=False)
         payload = {"incident_id": "S-RL", "alert": "x", "evidence": [], "proposed_action": "x"}
@@ -174,6 +185,7 @@ def test_path_traversal_in_run_id_400():
         import importlib
 
         import ma_co.api.main as mod
+
         importlib.reload(mod)
         client = TestClient(mod.app, raise_server_exceptions=False)
         r = client.get("/v1/runs/../../etc/passwd")

@@ -1,4 +1,5 @@
 """Read-only fixture telemetry. Live connectors belong behind scoped service credentials."""
+
 from typing import Literal
 
 _ALLOWED_SOURCES: frozenset[str] = frozenset({"prometheus", "github", "kubernetes"})

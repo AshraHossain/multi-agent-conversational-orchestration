@@ -37,16 +37,25 @@ testpaths = ["tests"]
 markers = [
     "unit: fast offline unit tests with deterministic inputs and mocks",
     "integration: API, CLI, and end-to-end pipeline tests using offline test doubles",
-    "live: tests requiring live BYNARA_API_KEY credentials",
+    "live: tests requiring live BYNARA_API_KEY or GOOGLE_API_KEY credentials",
+    "slow: full-matrix or multi-repetition benchmarks",
 ]
-addopts = "-m 'not live'"
+addopts = "-m 'not live' -p no:cacheprovider"
+
+[tool.coverage.run]
+branch = true
+source = ["src/ma_co"]
+
+[tool.coverage.report]
+show_missing = true
+fail_under = 80
 
 [tool.ruff]
 line-length = 100
 target-version = "py311"
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "UP", "B", "S"]
+select = ["E", "F", "W", "I", "B", "UP", "S", "SIM", "RUF"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["S101", "S105", "S106"]

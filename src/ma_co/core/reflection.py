@@ -60,10 +60,7 @@ class FixtureRegenerator:
             revised = f"Incident ID: {incident.incident_id}\n{revised}"
 
         evidence = incident.evidence[0] if incident.evidence else "not supplied"
-        revised += (
-            f"\nEvidence: {evidence}"
-            "\nAction is only a proposal; require approval."
-        )
+        revised += f"\nEvidence: {evidence}\nAction is only a proposal; require approval."
 
         return revised, 0.0
 
@@ -81,9 +78,7 @@ def apply_deterministic_veto(
         update={
             "score": 0.0,
             "critique": (
-                result.critique
-                + "\nDeterministic validation failures: "
-                + "; ".join(defects)
+                result.critique + "\nDeterministic validation failures: " + "; ".join(defects)
             ),
             "missing_evidence": (*result.missing_evidence, *defects),
         }

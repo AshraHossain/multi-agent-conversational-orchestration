@@ -1,4 +1,5 @@
 """Optional MongoDB-backed RunStore. Requires pymongo and MONGO_URI env var."""
+
 from __future__ import annotations
 
 import os
@@ -17,7 +18,7 @@ class MongoRunStore:
         db_name: str = "ma_co",
         collection: str = "runs",
     ) -> None:
-        import pymongo  # noqa: PLC0415
+        import pymongo
 
         uri = uri or os.environ["MONGO_URI"]
         self._col = pymongo.MongoClient(uri)[db_name][collection]
