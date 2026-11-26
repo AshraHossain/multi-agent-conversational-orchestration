@@ -13,9 +13,10 @@ Live engineering backlog tracked alongside [PLAN.md](PLAN.md) and [PLANNING.md](
 - [x] Phase 2: Extract `src/ma_co/contracts/`, enable `branch = true` coverage, `W`/`SIM`/`RUF` Ruff rules, `ruff format --check`, and AST/layering/ground-truth/tool-allowlist guard tests (`tests/test_invariants.py`).
 - [x] Phase 3: Upgrade `src/ma_co/eval.py` to 3-tier evaluation ladder (`--guardrails`, `--verifier-matrix`, `--repeat N`).
 - [x] Phase 4: Update `README.md` (triad Mermaid diagrams + 3-tier scorecard), refresh `graphify-out/`, and pass `make check`.
+- [x] Merge `feat/blueprint-parity-upgrade` into `main` (`--no-ff`), verify remote CI green, and tag `v0.2.0`.
 
 ## High Priority
-- [ ] Review and merge `feat/blueprint-parity-upgrade` into `main` (`--no-ff`) and verify remote CI.
+- [ ] Run Tier-3 live evaluation (`--repeat 3`) and blind-spot replay (`paraphrased_certainty`, `subtle_causal_overclaim`) once live LLM budget is approved.
 
 ## Medium Priority
 - [ ] Add live `--repeat 3` benchmark report against Gemini (`GOOGLE_API_KEY`) / Bynara (`BYNARA_API_KEY`) in `docs/eval_live_baseline.md` when cloud budget is approved.
