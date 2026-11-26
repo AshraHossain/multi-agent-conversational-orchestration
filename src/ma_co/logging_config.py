@@ -1,4 +1,5 @@
 """Structured JSON logging setup. Call configure_logging() at app startup."""
+
 from __future__ import annotations
 
 import json
@@ -21,10 +22,28 @@ class _JsonFormatter(logging.Formatter):
         # propagate any extra kwargs passed to the logger call
         for key, val in record.__dict__.items():
             if key not in {
-                "args", "asctime", "created", "exc_info", "exc_text", "filename",
-                "funcName", "id", "levelname", "levelno", "lineno", "module",
-                "msecs", "message", "msg", "name", "pathname", "process",
-                "processName", "relativeCreated", "stack_info", "thread",
+                "args",
+                "asctime",
+                "created",
+                "exc_info",
+                "exc_text",
+                "filename",
+                "funcName",
+                "id",
+                "levelname",
+                "levelno",
+                "lineno",
+                "module",
+                "msecs",
+                "message",
+                "msg",
+                "name",
+                "pathname",
+                "process",
+                "processName",
+                "relativeCreated",
+                "stack_info",
+                "thread",
                 "threadName",
             }:
                 payload[key] = val

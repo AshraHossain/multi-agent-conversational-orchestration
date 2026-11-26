@@ -34,9 +34,7 @@ def validate_incident_draft(incident: IncidentInput, draft: str) -> list[str]:
         draft,
     )
     if declared_id and declared_id.group(1).strip("`*") != incident.incident_id:
-        defects.append(
-            f"Declared incident ID does not match input {incident.incident_id}"
-        )
+        defects.append(f"Declared incident ID does not match input {incident.incident_id}")
     elif incident.incident_id not in draft:
         defects.append(f"Input incident ID {incident.incident_id} is missing")
 

@@ -2,6 +2,7 @@
 
 Requires GOOGLE_API_KEY and the 'google-generativeai' package.
 """
+
 import os
 from typing import TYPE_CHECKING
 
@@ -17,7 +18,8 @@ class GenaiJudge:
 
     def __init__(self, model: str = "gemini-2.0-flash") -> None:
         self.model = model
-        import google.generativeai as genai  # noqa: PLC0415
+        import google.generativeai as genai
+
         genai.configure(api_key=os.environ["GOOGLE_API_KEY"])
         self._client = genai.GenerativeModel(model)
 
@@ -35,7 +37,8 @@ class GenaiJudge:
             '"missing_evidence": [<str>], "tool_use_valid": true}'
         )
         response = self._client.generate_content(prompt)
-        import json  # noqa: PLC0415
+        import json
+
         raw = json.loads(response.text.strip().removeprefix("```json").removesuffix("```").strip())
         return JudgeResult(
             score=float(raw.get("score", 0)),
@@ -51,13 +54,12 @@ class GenaiRegenerator:
 
     def __init__(self, model: str = "gemini-2.0-flash") -> None:
         self.model = model
-        import google.generativeai as genai  # noqa: PLC0415
+        import google.generativeai as genai
+
         genai.configure(api_key=os.environ["GOOGLE_API_KEY"])
         self._client = genai.GenerativeModel(model)
 
-    def regenerate(
-        self, incident: IncidentInput, draft: str, critique: str
-    ) -> tuple[str, float]:
+    def regenerate(self, incident: IncidentInput, draft: str, critique: str) -> tuple[str, float]:
         framed_draft = frame_untrusted_text(draft)
         framed_critique = frame_untrusted_text(critique)
         prompt = (

@@ -1,37 +1,276 @@
 {
-  "total_cases": 3,
+  "total_cases": 5,
+  "repeat": 3,
   "recall_at_1": 1.0,
   "policy_accuracy": 1.0,
   "grounding_rate": 1.0,
   "evidence_grounding_rate": 1.0,
   "guardrail_pass_rate": 1.0,
-  "mean_final_score": 0.7,
-  "latency_p50_ms": 3.26,
-  "latency_p95_ms": 9.23,
+  "mean_final_score": 0.78,
+  "latency_p50_ms": 1.42,
+  "latency_p95_ms": 6.26,
+  "repeat_stats": {
+    "recall_at_1": {
+      "mean": 1.0,
+      "min": 1.0,
+      "max": 1.0,
+      "stdev": 0.0
+    },
+    "grounding_rate": {
+      "mean": 1.0,
+      "min": 1.0,
+      "max": 1.0,
+      "stdev": 0.0
+    },
+    "mean_final_score": {
+      "mean": 0.78,
+      "min": 0.78,
+      "max": 0.78,
+      "stdev": 0.0
+    },
+    "per_case_compliance": {
+      "EVAL-01-HIGH-5XX": "3/3",
+      "EVAL-02-NO-ACTION-APPROVED": "3/3",
+      "EVAL-03-MISSING-EVIDENCE": "3/3",
+      "EVAL-04-HELDOUT-DB-POOL": "3/3",
+      "EVAL-05-HELDOUT-OBSERVATION-ONLY": "3/3"
+    }
+  },
   "cases": [
     {
       "case_id": "EVAL-01-HIGH-5XX",
+      "split": "main",
       "status_ok": true,
       "grounded": true,
       "iterations": 2,
       "final_score": 0.9,
-      "latency_ms": 9.23
+      "latency_ms": 1.24
     },
     {
       "case_id": "EVAL-02-NO-ACTION-APPROVED",
+      "split": "main",
       "status_ok": true,
       "grounded": true,
       "iterations": 2,
       "final_score": 0.9,
-      "latency_ms": 1.86
+      "latency_ms": 1.41
     },
     {
       "case_id": "EVAL-03-MISSING-EVIDENCE",
+      "split": "main",
       "status_ok": true,
       "grounded": true,
       "iterations": 3,
       "final_score": 0.3,
-      "latency_ms": 3.26
+      "latency_ms": 1.53
+    },
+    {
+      "case_id": "EVAL-04-HELDOUT-DB-POOL",
+      "split": "heldout",
+      "status_ok": true,
+      "grounded": true,
+      "iterations": 2,
+      "final_score": 0.9,
+      "latency_ms": 1.47
+    },
+    {
+      "case_id": "EVAL-05-HELDOUT-OBSERVATION-ONLY",
+      "split": "heldout",
+      "status_ok": true,
+      "grounded": true,
+      "iterations": 2,
+      "final_score": 0.9,
+      "latency_ms": 1.4
     }
-  ]
+  ],
+  "guardrails": {
+    "total": 10,
+    "passed": 10,
+    "pass_rate": 1.0,
+    "checks": [
+      {
+        "id": "G01-MIME-415",
+        "passed": true,
+        "detail": "status=415"
+      },
+      {
+        "id": "G02-PATH-TRAVERSAL-400",
+        "passed": true,
+        "detail": "status=400"
+      },
+      {
+        "id": "G03-AUTH-MISSING-401",
+        "passed": true,
+        "detail": "status=401"
+      },
+      {
+        "id": "G04-AUTH-WRONG-401",
+        "passed": true,
+        "detail": "status=401"
+      },
+      {
+        "id": "G05-PAYLOAD-CAP-413",
+        "passed": true,
+        "detail": "status=413"
+      },
+      {
+        "id": "G06-RATE-LIMIT-429",
+        "passed": true,
+        "detail": "status=429"
+      },
+      {
+        "id": "G07-PROMPT-ESCAPE-FRAMING",
+        "passed": true,
+        "detail": "boundary tags neutralized"
+      },
+      {
+        "id": "G08-FORBIDDEN-TOOL",
+        "passed": true,
+        "detail": "shell tool blocked"
+      },
+      {
+        "id": "G09-ID-SPOOF-VETO",
+        "passed": true,
+        "detail": "status=quality_failed"
+      },
+      {
+        "id": "G10-EVIDENCE-DENIAL-VETO",
+        "passed": true,
+        "detail": "status=quality_failed"
+      }
+    ]
+  },
+  "verifier_matrix": {
+    "defects_total": 14,
+    "defects_caught": 14,
+    "detection_rate": 1.0,
+    "clean_total": 5,
+    "false_positives": 0,
+    "false_positive_rate": 0.0,
+    "deterministic_blind_spots": [
+      "paraphrased_certainty",
+      "subtle_causal_overclaim"
+    ],
+    "rows": [
+      {
+        "case_id": "EVAL-01-HIGH-5XX",
+        "split": "main",
+        "perturbation": "missing_incident_id",
+        "caught": true
+      },
+      {
+        "case_id": "EVAL-01-HIGH-5XX",
+        "split": "main",
+        "perturbation": "spoofed_incident_id",
+        "caught": true
+      },
+      {
+        "case_id": "EVAL-01-HIGH-5XX",
+        "split": "main",
+        "perturbation": "evidence_contradiction",
+        "caught": true
+      },
+      {
+        "case_id": "EVAL-01-HIGH-5XX",
+        "split": "main",
+        "perturbation": "clean_draft",
+        "false_positive": false,
+        "planted_caught": "3/3"
+      },
+      {
+        "case_id": "EVAL-02-NO-ACTION-APPROVED",
+        "split": "main",
+        "perturbation": "missing_incident_id",
+        "caught": true
+      },
+      {
+        "case_id": "EVAL-02-NO-ACTION-APPROVED",
+        "split": "main",
+        "perturbation": "spoofed_incident_id",
+        "caught": true
+      },
+      {
+        "case_id": "EVAL-02-NO-ACTION-APPROVED",
+        "split": "main",
+        "perturbation": "evidence_contradiction",
+        "caught": true
+      },
+      {
+        "case_id": "EVAL-02-NO-ACTION-APPROVED",
+        "split": "main",
+        "perturbation": "clean_draft",
+        "false_positive": false,
+        "planted_caught": "3/3"
+      },
+      {
+        "case_id": "EVAL-03-MISSING-EVIDENCE",
+        "split": "main",
+        "perturbation": "missing_incident_id",
+        "caught": true
+      },
+      {
+        "case_id": "EVAL-03-MISSING-EVIDENCE",
+        "split": "main",
+        "perturbation": "spoofed_incident_id",
+        "caught": true
+      },
+      {
+        "case_id": "EVAL-03-MISSING-EVIDENCE",
+        "split": "main",
+        "perturbation": "clean_draft",
+        "false_positive": false,
+        "planted_caught": "2/2"
+      },
+      {
+        "case_id": "EVAL-04-HELDOUT-DB-POOL",
+        "split": "heldout",
+        "perturbation": "missing_incident_id",
+        "caught": true
+      },
+      {
+        "case_id": "EVAL-04-HELDOUT-DB-POOL",
+        "split": "heldout",
+        "perturbation": "spoofed_incident_id",
+        "caught": true
+      },
+      {
+        "case_id": "EVAL-04-HELDOUT-DB-POOL",
+        "split": "heldout",
+        "perturbation": "evidence_contradiction",
+        "caught": true
+      },
+      {
+        "case_id": "EVAL-04-HELDOUT-DB-POOL",
+        "split": "heldout",
+        "perturbation": "clean_draft",
+        "false_positive": false,
+        "planted_caught": "3/3"
+      },
+      {
+        "case_id": "EVAL-05-HELDOUT-OBSERVATION-ONLY",
+        "split": "heldout",
+        "perturbation": "missing_incident_id",
+        "caught": true
+      },
+      {
+        "case_id": "EVAL-05-HELDOUT-OBSERVATION-ONLY",
+        "split": "heldout",
+        "perturbation": "spoofed_incident_id",
+        "caught": true
+      },
+      {
+        "case_id": "EVAL-05-HELDOUT-OBSERVATION-ONLY",
+        "split": "heldout",
+        "perturbation": "evidence_contradiction",
+        "caught": true
+      },
+      {
+        "case_id": "EVAL-05-HELDOUT-OBSERVATION-ONLY",
+        "split": "heldout",
+        "perturbation": "clean_draft",
+        "false_positive": false,
+        "planted_caught": "3/3"
+      }
+    ]
+  }
 }

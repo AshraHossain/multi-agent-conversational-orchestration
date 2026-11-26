@@ -245,9 +245,7 @@ def review(run_id: str, request: ApprovalInput) -> RunRecord:
         update={
             "approved_by": request.approver if request.decision == "approve" else None,
             "status": (
-                Status.APPROVED_DRAFT
-                if request.decision == "approve"
-                else Status.QUALITY_FAILED
+                Status.APPROVED_DRAFT if request.decision == "approve" else Status.QUALITY_FAILED
             ),
             "updated_at": utc_now(),
         }

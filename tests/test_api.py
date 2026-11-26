@@ -198,7 +198,7 @@ def test_eval_runner_and_main(
     assert scorecard["evidence_grounding_rate"] == 1.0
     assert scorecard["guardrail_pass_rate"] == 1.0
 
-    eval_mod.main()
+    eval_mod.main([])
     stdout = capsys.readouterr().out
     assert "Policy Accuracy" in stdout
     assert (tmp_path / "evaluation" / "eval_report.json").exists()

@@ -16,12 +16,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--live-crewai", action="store_true")
     args = parser.parse_args(argv)
 
-    incident = IncidentInput.model_validate_json(
-        Path(args.input).read_text(encoding="utf-8")
-    )
-    policy = Policy.model_validate_json(
-        Path("policies/default.json").read_text(encoding="utf-8")
-    )
+    incident = IncidentInput.model_validate_json(Path(args.input).read_text(encoding="utf-8"))
+    policy = Policy.model_validate_json(Path("policies/default.json").read_text(encoding="utf-8"))
     draft = f"Incident ID: {incident.incident_id}\nTriage: {incident.alert}. Cause unconfirmed."
 
     if args.live_crewai:
