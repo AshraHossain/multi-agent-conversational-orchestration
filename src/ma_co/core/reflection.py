@@ -1,5 +1,6 @@
 """Bounded reflection engine and deterministic offline fixture doubles."""
 
+from collections.abc import Callable
 from typing import Protocol
 
 from .models import (
@@ -11,7 +12,7 @@ from .models import (
     Status,
     utc_now,
 )
-from .validation import validate_incident_draft
+from .validation import compute_audit_digest, validate_incident_draft
 
 
 class Judge(Protocol):
@@ -103,6 +104,12 @@ class ReflectionEngine:
         incident: IncidentInput,
         draft: str,
         used_tools: set[str] | frozenset[str] | None = None,
+        *,
+        on_iteration: Callable[[Iteration], None] | None = None,
+        run_id: str | None = None,
+        parent_run_id: str | None = None,
+        follow_up_note: str = "",
+        reviewer_feedback: str = "",
     ) -> RunRecord:
         if (used_tools or frozenset()) & self.policy.forbidden_tools:
             raise ValueError("Forbidden tool requested")
@@ -119,13 +126,14 @@ class ReflectionEngine:
             result = apply_deterministic_veto(incident, current_draft, raw_result)
 
             total_cost += result.estimated_cost_usd
-            iterations.append(
-                Iteration(
-                    number=number,
-                    draft=current_draft,
-                    judge=result,
-                )
+            iteration = Iteration(
+                number=number,
+                draft=current_draft,
+                judge=result,
             )
+            iterations.append(iteration)
+            if on_iteration is not None:
+                on_iteration(iteration)
 
             if initial_score is None:
                 initial_score = result.score
@@ -169,12 +177,19 @@ class ReflectionEngine:
 
             current_draft = candidate
 
-        return RunRecord(
-            incident=incident,
-            draft=current_draft,
-            iterations=tuple(iterations),
-            status=status,
-            improvement_delta=improvement_delta,
-            estimated_cost_usd=total_cost,
-            updated_at=utc_now(),
-        )
+        record_kwargs: dict[str, object] = {
+            "incident": incident,
+            "draft": current_draft,
+            "iterations": tuple(iterations),
+            "status": status,
+            "improvement_delta": improvement_delta,
+            "estimated_cost_usd": total_cost,
+            "parent_run_id": parent_run_id,
+            "follow_up_note": follow_up_note,
+            "reviewer_feedback": reviewer_feedback,
+            "updated_at": utc_now(),
+        }
+        if run_id is not None:
+            record_kwargs["run_id"] = run_id
+        record = RunRecord.model_validate(record_kwargs)
+        return record.model_copy(update={"audit_digest": compute_audit_digest(record)})

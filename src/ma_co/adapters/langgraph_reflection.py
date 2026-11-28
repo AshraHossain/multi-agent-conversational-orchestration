@@ -1,6 +1,9 @@
 """Graph owns the bounded loop; action execution is deliberately outside the graph."""
 
-from typing import Any, TypedDict
+from __future__ import annotations
+
+from collections.abc import Callable
+from typing import Any, Protocol, TypedDict
 
 from ma_co.core.models import IncidentInput, Policy
 from ma_co.core.reflection import Judge, Regenerator, apply_deterministic_veto
@@ -19,26 +22,38 @@ class State(TypedDict, total=False):
     history: list[dict[str, Any]]
 
 
+class InvokableGraph(Protocol):
+    """Minimal protocol shared by compiled LangGraph StateGraph and pure fallback."""
+
+    def invoke(self, initial_state: State) -> dict[str, Any]: ...
+
+
 class _FallbackGraph:
     """Pure-Python fallback when langgraph is not installed."""
 
-    def __init__(self, evaluate, route, regenerate, finish):
+    def __init__(
+        self,
+        evaluate: Callable[[State], dict[str, Any]],
+        route: Callable[[State], str],
+        regenerate: Callable[[State], dict[str, Any]],
+        finish: Callable[[State], dict[str, Any]],
+    ) -> None:
         self._evaluate = evaluate
         self._route = route
         self._regenerate = regenerate
         self._finish = finish
 
-    def invoke(self, initial_state: State) -> State:
-        state: State = dict(initial_state)
+    def invoke(self, initial_state: State) -> dict[str, Any]:
+        state: dict[str, Any] = dict(initial_state)
         while True:
-            state.update(self._evaluate(state))
-            if self._route(state) == "stop":
-                state.update(self._finish(state))
+            state.update(self._evaluate(state))  # type: ignore[arg-type]
+            if self._route(state) == "stop":  # type: ignore[arg-type]
+                state.update(self._finish(state))  # type: ignore[arg-type]
                 return state
-            state.update(self._regenerate(state))
+            state.update(self._regenerate(state))  # type: ignore[arg-type]
 
 
-def build_graph(judge: Judge, regenerator: Regenerator, policy: Policy):
+def build_graph(judge: Judge, regenerator: Regenerator, policy: Policy) -> Any:
     """Build a bounded reflection state machine using LangGraph or pure fallback."""
 
     def evaluate(state: State) -> dict[str, Any]:

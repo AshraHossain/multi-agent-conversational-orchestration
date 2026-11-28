@@ -1,22 +1,19 @@
 """Read-only fixture telemetry. Live connectors belong behind scoped service credentials."""
 
-from typing import Literal
+from ma_co.tools.providers import (
+    ALLOWED_SOURCES,
+    FixtureTelemetryProvider,
+    TelemetrySource,
+)
 
-_ALLOWED_SOURCES: frozenset[str] = frozenset({"prometheus", "github", "kubernetes"})
-
-_EVENTS: dict[str, dict[str, str]] = {
-    "INC-001": {
-        "prometheus": "5xx rate 12% at 10:05 UTC",
-        "github": "deploy abc123 at 10:02 UTC",
-        "kubernetes": "3/4 pods ready; no remediation executed",
-    }
-}
+_DEFAULT_PROVIDER = FixtureTelemetryProvider()
 
 
 def lookup_event(
     incident_id: str,
-    source: Literal["prometheus", "github", "kubernetes"],
+    source: TelemetrySource,
 ) -> str:
-    if source not in _ALLOWED_SOURCES:
-        raise ValueError(f"Unsupported source: {source!r}. Allowed: {sorted(_ALLOWED_SOURCES)}")
-    return _EVENTS.get(incident_id, {}).get(source, "No fixture evidence available")
+    """Lookup a read-only fixture signal for an incident."""
+    if source not in ALLOWED_SOURCES:
+        raise ValueError(f"Unsupported source: {source!r}. Allowed: {sorted(ALLOWED_SOURCES)}")
+    return _DEFAULT_PROVIDER.lookup(incident_id, source)

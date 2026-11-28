@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Multi-Agent Incident Cockpit — ma_co</title>
+  <style>
+    :root {
+      --bg: #0b1120;
+      --surface: #111827;
+      --surface-2: #1e293b;
+      --border: #334155;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --green: #22c55e;
+      --amber: #f59e0b;
+      --red: #ef4444;
+      --purple: #a78bfa;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      --sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      line-height: 1.45;
+    }
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 22px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+    }
+    .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 16px; }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 3px 9px;
+      border-radius: 999px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+    }
+    .badge.ok { color: var(--green); border-color: rgba(34, 197, 94, 0.4); }
+    .badge.warn { color: var(--amber); border-color: rgba(245, 158, 11, 0.4); }
+    .badge.err { color: var(--red); border-color: rgba(239, 68, 68, 0.4); }
+    .badge.info { color: var(--accent); border-color: rgba(56, 189, 248, 0.4); }
+    .controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .controls a { color: var(--accent); text-decoration: none; font-size: 13px; }
+    input, textarea, select, button {
+      font-family: inherit;
+      font-size: 13px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: #0f172a;
+      color: var(--text);
+      padding: 7px 10px;
+    }
+    textarea { width: 100%; resize: vertical; font-family: var(--mono); font-size: 12px; }
+    button {
+      cursor: pointer;
+      font-weight: 600;
+      background: var(--surface-2);
+      transition: border-color 0.15s, background 0.15s;
+    }
+    button:hover { border-color: var(--accent); }
+    button.primary { background: #0284c7; border-color: #0ea5e9; color: #fff; }
+    button.primary:hover { background: #0369a1; }
+    button.success { background: #15803d; border-color: #22c55e; color: #fff; }
+    button.danger { background: #b91c1c; border-color: #ef4444; color: #fff; }
+    main {
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      gap: 16px;
+      padding: 16px 22px 40px;
+      max-width: 1480px;
+      margin: 0 auto;
+    }
+    @media (max-width: 960px) { main { grid-template-columns: 1fr; } }
+    .stack { display: flex; flex-direction: column; gap: 16px; }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+    }
+    .card h2 {
+      margin: 0 0 12px;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--muted);
+    }
+    label { display: block; font-size: 12px; color: var(--muted); margin: 8px 0 4px; }
+    .field-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; align-items: center; }
+    .tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+    .tabs button.active { background: #0284c7; border-color: #38bdf8; color: #fff; }
+    .run-list { display: flex; flex-direction: column; gap: 8px; max-height: 440px; overflow-y: auto; }
+    .run-item {
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: #0f172a;
+      cursor: pointer;
+    }
+    .run-item.selected { border-color: var(--accent); background: #172554; }
+    .run-item-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+    .mono { font-family: var(--mono); font-size: 12px; }
+    .muted { color: var(--muted); font-size: 12px; }
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .metric-box {
+      background: #0f172a;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px;
+    }
+    .metric-box .k { font-size: 11px; color: var(--muted); text-transform: uppercase; }
+    .metric-box .v { font-size: 15px; font-weight: 700; margin-top: 4px; }
+    .iter-card {
+      background: #0f172a;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 10px;
+    }
+    .score-bar {
+      height: 6px;
+      border-radius: 4px;
+      background: var(--surface-2);
+      overflow: hidden;
+      margin: 6px 0;
+    }
+    .score-fill { height: 100%; background: var(--accent); }
+    pre {
+      margin: 6px 0 0;
+      padding: 10px;
+      border-radius: 6px;
+      background: #020617;
+      border: 1px solid #1e293b;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      font-family: var(--mono);
+      font-size: 12px;
+    }
+    .diff-line { display: block; padding: 1px 6px; }
+    .diff-add { background: rgba(34, 197, 94, 0.16); color: #86efac; }
+    .diff-del { background: rgba(239, 68, 68, 0.16); color: #fca5a5; }
+    .banner {
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      margin-bottom: 10px;
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+    }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <span>Multi-Agent Incident Cockpit</span>
+      <span id="healthBadge" class="badge info">Checking /readyz...</span>
+      <span class="badge warn">Read-Only Triage &middot; Human Approval Required</span>
+    </div>
+    <div class="controls">
+      <input id="apiKeyInput" type="password" placeholder="Optional X-API-Key" size="20" />
+      <button id="saveKeyBtn" type="button">Apply Key</button>
+      <a href="/docs" target="_blank" rel="noopener">OpenAPI Docs</a>
+      <a href="/metrics" target="_blank" rel="noopener">/metrics</a>
+    </div>
+  </header>
+
+  <main>
+    <section class="stack">
+      <div class="card">
+        <h2>New Incident Triage</h2>
+        <label for="incId">Incident ID</label>
+        <input id="incId" value="INC-001" style="width: 100%;" />
+        <label for="incAlert">Alert Summary</label>
+        <textarea id="incAlert" rows="2">Elevated 5xx errors after deploy; root cause unconfirmed</textarea>
+        <label for="incEvidence">Evidence (one line per item)</label>
+        <textarea id="incEvidence" rows="3">Prometheus 5xx rate 12% at 10:05 UTC
+GitHub deploy abc123 at 10:02 UTC</textarea>
+        <label for="incAction">Proposed Action (leave blank for observation-only)</label>
+        <input id="incAction" value="Propose rollback for human review; do not execute" style="width: 100%;" />
+        <div class="field-row">
+          <label style="display:flex;align-items:center;gap:6px;margin:0;cursor:pointer;">
+            <input id="useCrewCheck" type="checkbox" /> Use 3-Agent CrewAI
+          </label>
+        </div>
+        <div class="field-row">
+          <button id="submitSyncBtn" class="primary" type="button">Run Sync (201)</button>
+          <button id="submitAsyncBtn" type="button">Run Async + SSE (202)</button>
+        </div>
+        <div id="submitMsg" class="muted" style="margin-top:8px;"></div>
+      </div>
+
+      <div class="card">
+        <h2>Runs &amp; Review Queue</h2>
+        <div class="tabs" id="filterTabs">
+          <button type="button" data-status="" class="active">All</button>
+          <button type="button" data-status="needs_review">Needs Review</button>
+          <button type="button" data-status="approved_draft">Approved</button>
+          <button type="button" data-status="quality_failed">Failed</button>
+          <button type="button" id="refreshRunsBtn">Refresh</button>
+        </div>
+        <div id="runList" class="run-list">
+          <div class="muted">Loading runs...</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="stack">
+      <div class="card" id="detailCard">
+        <h2>Run Inspector</h2>
+        <div id="streamBanner" class="banner hidden"></div>
+        <div id="detailEmpty" class="muted">Select a run from the queue or submit a new incident to inspect iterations, deterministic vetoes, draft diff, and human approval controls.</div>
+        <div id="detailContent" class="hidden">
+          <div class="meta-grid" id="metaGrid"></div>
+
+          <div id="reviewBox" class="card hidden" style="margin-bottom:14px;background:#0f172a;">
+            <h2>Human-in-the-Loop Review (Decision Recorder Only)</h2>
+            <div class="field-row">
+              <input id="approverInput" placeholder="Reviewer name (e.g. sre-lead)" value="sre-oncall" />
+              <input id="reviewNoteInput" placeholder="Audit note (optional)" style="flex:1;" />
+            </div>
+            <div class="field-row">
+              <button id="approveBtn" class="success" type="button">Approve Draft</button>
+              <button id="rejectBtn" class="danger" type="button">Reject Draft</button>
+            </div>
+          </div>
+
+          <div id="auditBox" class="banner hidden"></div>
+
+          <h2>Reflection Iterations &amp; Veto Timeline</h2>
+          <div id="iterationsList"></div>
+
+          <h2 style="margin-top:16px;">Draft Diff (Iteration 0 &rarr; Final)</h2>
+          <pre id="draftDiff"></pre>
+
+          <div class="card" style="margin-top:16px;background:#0f172a;">
+            <h2>Conversational Follow-Up (Immutable Child Run)</h2>
+            <label for="followNote">Operator Follow-Up Context / Question</label>
+            <textarea id="followNote" rows="2" placeholder="e.g. Confirmed connection pool spike correlates with PR #482"></textarea>
+            <label for="followEvidence">Additional Evidence (one line per item)</label>
+            <textarea id="followEvidence" rows="2" placeholder="Prometheus db_wait_ms=920ms at 10:08 UTC"></textarea>
+            <div class="field-row">
+              <button id="followUpBtn" class="primary" type="button">Submit Follow-Up</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    (function () {
+      let activeFilter = "";
+      let selectedRun = null;
+      let activeStream = null;
+
+      const $ = (id) => document.getElementById(id);
+      const apiKeyInput = $("apiKeyInput");
+      apiKeyInput.value = sessionStorage.getItem("ma_co_api_key") || "";
+
+      function headers(isJson = false) {
+        const h = {};
+        if (isJson) h["Content-Type"] = "application/json";
+        const key = sessionStorage.getItem("ma_co_api_key") || "";
+        if (key) h["X-API-Key"] = key;
+        return h;
+      }
+
+      function statusClass(st) {
+        if (st === "approved_draft") return "ok";
+        if (st === "needs_review" || st === "pending" || st === "running") return "warn";
+        return "err";
+      }
+
+      function el(tag, attrs = {}, text = "") {
+        const node = document.createElement(tag);
+        Object.entries(attrs).forEach(([k, v]) => {
+          if (k === "class") node.className = v;
+          else node.setAttribute(k, v);
+        });
+        if (text) node.textContent = text;
+        return node;
+      }
+
+      async function checkHealth() {
+        const badge = $("healthBadge");
+        try {
+          const resp = await fetch("/readyz");
+          if (resp.ok) {
+            badge.textContent = "Ready (/readyz 200)";
+            badge.className = "badge ok";
+          } else {
+            badge.textContent = "Degraded (/readyz " + resp.status + ")";
+            badge.className = "badge err";
+          }
+        } catch (_err) {
+          badge.textContent = "Offline";
+          badge.className = "badge err";
+        }
+      }
+
+      async function loadRuns() {
+        const list = $("runList");
+        const qs = new URLSearchParams({ limit: "30" });
+        if (activeFilter) qs.set("status", activeFilter);
+        try {
+          const resp = await fetch("/v1/runs?" + qs.toString(), { headers: headers() });
+          if (!resp.ok) {
+            list.textContent = "Error loading runs: HTTP " + resp.status;
+            return;
+          }
+          const data = await resp.json();
+          list.textContent = "";
+          if (!data.items || data.items.length === 0) {
+            list.appendChild(el("div", { class: "muted" }, "No runs match this filter yet."));
+            return;
+          }
+          data.items.forEach((run) => {
+            const item = el("div", {
+              class: "run-item" + (selectedRun && selectedRun.run_id === run.run_id ? " selected" : ""),
+            });
+            const top = el("div", { class: "run-item-top" });
+            top.appendChild(el("strong", { class: "mono" }, run.incident.incident_id));
+            top.appendChild(el("span", { class: "badge " + statusClass(run.status) }, run.status));
+            item.appendChild(top);
+            item.appendChild(el("div", { class: "muted", style: "margin-top:4px;" }, run.incident.alert.slice(0, 72)));
+            const meta = "Iterations: " + run.iterations.length + " · $" + Number(run.estimated_cost_usd || 0).toFixed(4)
+              + (run.parent_run_id ? " · follow-up" : "");
+            item.appendChild(el("div", { class: "muted mono", style: "margin-top:4px;" }, meta));
+            item.addEventListener("click", () => selectRun(run));
+            list.appendChild(item);
+          });
+        } catch (err) {
+          list.textContent = "Request failed: " + err.message;
+        }
+      }
+
+      function renderDiff(firstDraft, finalDraft) {
+        const pre = $("draftDiff");
+        pre.textContent = "";
+        const a = (firstDraft || "").split("\n");
+        const b = (finalDraft || "").split("\n");
+        const aSet = new Set(a);
+        const bSet = new Set(b);
+        a.forEach((line) => {
+          if (!bSet.has(line)) pre.appendChild(el("span", { class: "diff-line diff-del" }, "- " + line));
+        });
+        b.forEach((line) => {
+          const cls = aSet.has(line) ? "diff-line" : "diff-line diff-add";
+          const prefix = aSet.has(line) ? "  " : "+ ";
+          pre.appendChild(el("span", { class: cls }, prefix + line));
+        });
+      }
+
+      function selectRun(run) {
+        selectedRun = run;
+        $("detailEmpty").classList.add("hidden");
+        $("detailContent").classList.remove("hidden");
+
+        const metaGrid = $("metaGrid");
+        metaGrid.textContent = "";
+        const cards = [
+          ["Status", run.status],
+          ["Incident", run.incident.incident_id],
+          ["Run ID", run.run_id.slice(0, 13) + "…"],
+          ["Cost (USD)", "$" + Number(run.estimated_cost_usd || 0).toFixed(4)],
+          ["Score Delta", (run.improvement_delta >= 0 ? "+" : "") + run.improvement_delta],
+          ["Lineage", run.parent_run_id ? "Child of " + run.parent_run_id.slice(0, 8) : "Root run"],
+        ];
+        cards.forEach(([k, v]) => {
+          const box = el("div", { class: "metric-box" });
+          box.appendChild(el("div", { class: "k" }, k));
+          box.appendChild(el("div", { class: "v mono" }, String(v)));
+          metaGrid.appendChild(box);
+        });
+
+        const reviewBox = $("reviewBox");
+        if (run.status === "needs_review") reviewBox.classList.remove("hidden");
+        else reviewBox.classList.add("hidden");
+
+        const auditBox = $("auditBox");
+        if (run.reviewed_by) {
+          auditBox.classList.remove("hidden");
+          auditBox.textContent = "Human Decision: " + run.review_decision + " by " + run.reviewed_by
+            + (run.review_note ? " — \"" + run.review_note + "\"" : "");
+        } else if (run.reviewer_feedback) {
+          auditBox.classList.remove("hidden");
+          auditBox.textContent = "CrewAI Safety Reviewer: " + run.reviewer_feedback;
+        } else {
+          auditBox.classList.add("hidden");
+        }
+
+        const itList = $("iterationsList");
+        itList.textContent = "";
+        (run.iterations || []).forEach((it) => {
+          const card = el("div", { class: "iter-card" });
+          const header = el("div", { class: "run-item-top" });
+          header.appendChild(el("strong", { class: "mono" }, "Iteration #" + it.number));
+          const vetoed = (it.judge.critique || "").includes("Deterministic validation failures:");
+          const badgeText = "Score " + Number(it.judge.score).toFixed(2) + (vetoed ? " · DETERMINISTIC VETO" : "");
+          header.appendChild(el("span", { class: "badge " + (vetoed ? "err" : it.judge.score >= 0.8 ? "ok" : "warn") }, badgeText));
+          card.appendChild(header);
+
+          const bar = el("div", { class: "score-bar" });
+          const fill = el("div", { class: "score-fill", style: "width:" + Math.round(it.judge.score * 100) + "%" });
+          bar.appendChild(fill);
+          card.appendChild(bar);
+
+          card.appendChild(el("div", { class: "muted" }, "Critique: " + it.judge.critique));
+          if (it.judge.missing_evidence && it.judge.missing_evidence.length) {
+            card.appendChild(el("div", { class: "muted", style: "color:#fca5a5;margin-top:4px;" },
+              "Defects / Missing: " + it.judge.missing_evidence.join("; ")));
+          }
+          card.appendChild(el("pre", {}, it.draft));
+          itList.appendChild(card);
+        });
+
+        const firstDraft = run.iterations && run.iterations.length ? run.iterations[0].draft : run.draft;
+        renderDiff(firstDraft, run.draft);
+        loadRuns();
+      }
+
+      function payloadFromForm() {
+        const ev = $("incEvidence").value.split("\n").map((s) => s.trim()).filter(Boolean);
+        return {
+          incident_id: $("incId").value.trim(),
+          alert: $("incAlert").value.trim(),
+          evidence: ev,
+          proposed_action: $("incAction").value.trim(),
+        };
+      }
+
+      async function submitTriage(isAsync) {
+        const msg = $("submitMsg");
+        msg.textContent = isAsync ? "Queueing async run..." : "Running synchronous triage...";
+        const useCrew = $("useCrewCheck").checked ? "?use_crewai=true" : "";
+        const url = (isAsync ? "/v1/incidents/triage/async" : "/v1/incidents/triage") + useCrew;
+        try {
+          const resp = await fetch(url, {
+            method: "POST",
+            headers: headers(true),
+            body: JSON.stringify(payloadFromForm()),
+          });
+          const data = await resp.json();
+          if (!resp.ok) {
+            msg.textContent = "Error (" + resp.status + "): " + (data.detail || JSON.stringify(data));
+            return;
+          }
+          msg.textContent = (isAsync ? "Queued 202: " : "Completed 201: ") + data.run_id;
+          selectRun(data);
+          if (isAsync) openStream(data.run_id);
+        } catch (err) {
+          msg.textContent = "Request failed: " + err.message;
+        }
+      }
+
+      function openStream(runId) {
+        if (activeStream) { activeStream.close(); activeStream = null; }
+        const banner = $("streamBanner");
+        banner.classList.remove("hidden");
+        banner.textContent = "Streaming live SSE updates for " + runId + "...";
+        const es = new EventSource("/v1/runs/" + encodeURIComponent(runId) + "/stream");
+        activeStream = es;
+        es.addEventListener("iteration", (ev) => {
+          const d = JSON.parse(ev.data);
+          banner.textContent = "SSE Iteration #" + d.iteration + " — score " + Number(d.score).toFixed(2);
+        });
+        es.addEventListener("complete", (ev) => {
+          const finalRun = JSON.parse(ev.data);
+          banner.textContent = "SSE Complete: terminal status = " + finalRun.status;
+          es.close();
+          activeStream = null;
+          selectRun(finalRun);
+        });
+        es.onerror = () => {
+          es.close();
+          activeStream = null;
+        };
+      }
+
+      async function submitReview(decision) {
+        if (!selectedRun) return;
+        const resp = await fetch("/v1/runs/" + encodeURIComponent(selectedRun.run_id) + "/review", {
+          method: "POST",
+          headers: headers(true),
+          body: JSON.stringify({
+            approver: $("approverInput").value.trim() || "sre-oncall",
+            decision,
+            note: $("reviewNoteInput").value.trim(),
+          }),
+        });
+        if (resp.ok) selectRun(await resp.json());
+      }
+
+      async function submitFollowUp() {
+        if (!selectedRun) return;
+        const note = $("followNote").value.trim();
+        if (!note) return;
+        const ev = $("followEvidence").value.split("\n").map((s) => s.trim()).filter(Boolean);
+        const resp = await fetch("/v1/runs/" + encodeURIComponent(selectedRun.run_id) + "/follow-up", {
+          method: "POST",
+          headers: headers(true),
+          body: JSON.stringify({ note, evidence: ev }),
+        });
+        if (resp.ok) {
+          $("followNote").value = "";
+          $("followEvidence").value = "";
+          selectRun(await resp.json());
+        }
+      }
+
+      $("saveKeyBtn").addEventListener("click", () => {
+        sessionStorage.setItem("ma_co_api_key", apiKeyInput.value.trim());
+        loadRuns();
+      });
+      $("submitSyncBtn").addEventListener("click", () => submitTriage(false));
+      $("submitAsyncBtn").addEventListener("click", () => submitTriage(true));
+      $("approveBtn").addEventListener("click", () => submitReview("approve"));
+      $("rejectBtn").addEventListener("click", () => submitReview("reject"));
+      $("followUpBtn").addEventListener("click", submitFollowUp);
+      $("refreshRunsBtn").addEventListener("click", loadRuns);
+      $("filterTabs").querySelectorAll("button[data-status]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          activeFilter = btn.getAttribute("data-status") || "";
+          $("filterTabs").querySelectorAll("button[data-status]").forEach((b) => b.classList.remove("active"));
+          btn.classList.add("active");
+          loadRuns();
+        });
+      });
+
+      checkHealth();
+      loadRuns();
+    })();
+  </script>
+</body>
+</html>

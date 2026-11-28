@@ -4,8 +4,8 @@ build-backend = "hatchling.build"
 
 [project]
 name = "multi-agent-conversational-orchestration"
-version = "0.2.0"
-description = "Policy-gated incident triage with CrewAI and LangGraph adapters"
+version = "0.3.0"
+description = "Policy-gated incident triage with CrewAI, LangGraph, streaming, and Incident Cockpit"
 readme = "README.md"
 requires-python = ">=3.11,<3.13"
 license = { text = "MIT" }
@@ -18,6 +18,13 @@ dependencies = [
 [project.optional-dependencies]
 crewai = ["crewai>=0.100,<2"]
 langgraph = ["langgraph>=0.2,<2"]
+genai = ["google-genai>=1.0,<2"]
+mongo = ["pymongo>=4.8,<5"]
+otel = [
+    "opentelemetry-api>=1.27,<2",
+    "opentelemetry-sdk>=1.27,<2",
+    "opentelemetry-exporter-otlp>=1.27,<2",
+]
 
 [dependency-groups]
 dev = [
@@ -64,4 +71,4 @@ select = ["E", "F", "W", "I", "B", "UP", "S", "SIM", "RUF"]
 python_version = "3.11"
 strict = true
 ignore_missing_imports = true
-exclude = ["tests/", "src/ma_co/adapters/"]
+exclude = ["tests/"]

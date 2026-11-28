@@ -15,6 +15,8 @@ def utc_now() -> datetime:
 class Status(StrEnum):
     """Terminal and intermediate lifecycle states for an incident triage run."""
 
+    PENDING = "pending"
+    RUNNING = "running"
     APPROVED_DRAFT = "approved_draft"
     NEEDS_REVIEW = "needs_review"
     QUALITY_FAILED = "quality_failed"
@@ -42,6 +44,16 @@ class IncidentInput(BaseModel):
     alert: str = Field(min_length=1, max_length=4000)
     evidence: tuple[str, ...] = Field(default_factory=tuple, max_length=20)
     proposed_action: str = Field(default="", max_length=400)
+
+
+class FollowUpInput(BaseModel):
+    """Validated operator follow-up payload for multi-turn incident triage."""
+
+    model_config = ConfigDict(frozen=True)
+
+    note: str = Field(min_length=1, max_length=2000)
+    evidence: tuple[str, ...] = Field(default_factory=tuple, max_length=20)
+    proposed_action: str | None = Field(default=None, max_length=400)
 
 
 class JudgeResult(BaseModel):
@@ -80,8 +92,28 @@ class RunRecord(BaseModel):
     improvement_delta: float = 0
     estimated_cost_usd: float = 0
     approved_by: str | None = None
+    reviewed_by: str | None = None
+    review_decision: str | None = None
+    review_note: str = ""
+    reviewed_at: datetime | None = None
+    parent_run_id: str | None = None
+    follow_up_note: str = ""
+    reviewer_feedback: str = ""
+    audit_digest: str = ""
     created_at: datetime = Field(default_factory=utc_now)
     updated_at: datetime = Field(default_factory=utc_now)
+
+
+class RunListResponse(BaseModel):
+    """Paginated response envelope for listing persisted runs."""
+
+    model_config = ConfigDict(frozen=True)
+
+    items: tuple[RunRecord, ...] = Field(default_factory=tuple)
+    runs: tuple[RunRecord, ...] = Field(default_factory=tuple)
+    total: int = Field(ge=0)
+    limit: int = Field(ge=1, le=100)
+    offset: int = Field(ge=0)
 
 
 class ApprovalInput(BaseModel):
@@ -91,6 +123,7 @@ class ApprovalInput(BaseModel):
 
     approver: str = Field(min_length=2, max_length=100)
     decision: str
+    note: str = Field(default="", max_length=1000)
 
     @model_validator(mode="after")
     def validate_decision(self) -> "ApprovalInput":
@@ -101,10 +134,12 @@ class ApprovalInput(BaseModel):
 
 __all__ = [
     "ApprovalInput",
+    "FollowUpInput",
     "IncidentInput",
     "Iteration",
     "JudgeResult",
     "Policy",
+    "RunListResponse",
     "RunRecord",
     "Status",
     "utc_now",
