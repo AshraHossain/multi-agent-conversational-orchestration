@@ -2,10 +2,12 @@
 
 from .incident import (
     ApprovalInput,
+    FollowUpInput,
     IncidentInput,
     Iteration,
     JudgeResult,
     Policy,
+    RunListResponse,
     RunRecord,
     Status,
     utc_now,
@@ -13,10 +15,12 @@ from .incident import (
 
 __all__ = [
     "ApprovalInput",
+    "FollowUpInput",
     "IncidentInput",
     "Iteration",
     "JudgeResult",
     "Policy",
+    "RunListResponse",
     "RunRecord",
     "Status",
     "utc_now",

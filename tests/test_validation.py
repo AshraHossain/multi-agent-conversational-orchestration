@@ -1,4 +1,4 @@
-"""Unit tests for deterministic validation, sanitization, and fixture tools."""
+"""Unit tests for deterministic validation, secret redaction, sanitization, and fixture tools."""
 
 import pytest
 from pydantic import ValidationError
@@ -7,6 +7,7 @@ from ma_co.core.models import ApprovalInput, IncidentInput, Policy, Status
 from ma_co.core.reflection import FixtureJudge, FixtureRegenerator, ReflectionEngine
 from ma_co.core.validation import (
     frame_untrusted_text,
+    redact_secrets,
     sanitize_identifier,
     validate_incident_draft,
 )
@@ -49,6 +50,48 @@ def test_rejects_evidence_contradiction() -> None:
         "Evidence: Prometheus: 12% at 10:05 UTC",
     )
     assert any("denies" in defect for defect in defects)
+
+
+@pytest.mark.unit
+def test_rejects_readonly_execution_claim_and_allows_negation() -> None:
+    bad = validate_incident_draft(
+        sample_incident(),
+        "Incident ID: INC-001\nEvidence: Prometheus: 12%\nWe rolled back the deployment.",
+    )
+    assert any("read-only invariant" in d for d in bad)
+
+    safe = validate_incident_draft(
+        sample_incident(),
+        "Incident ID: INC-001\nEvidence: Prometheus: 12%\n"
+        "Kubernetes 3/4 pods ready; no remediation executed.",
+    )
+    assert safe == []
+
+
+@pytest.mark.unit
+def test_rejects_fabricated_evidence() -> None:
+    defects = validate_incident_draft(
+        sample_incident(),
+        "Incident ID: INC-001\nEvidence: fabricated_ungrounded_metric_xyz",
+    )
+    assert any("ground" in d for d in defects)
+
+
+@pytest.mark.unit
+def test_redact_secrets_masks_tokens_keys_and_emails() -> None:
+    raw = (
+        "Auth Bearer eyJhbGciOiJIUzI1NiJ9.payload.sig "
+        "key=AIzaSyA1234567890123456789012345 "
+        "gh=ghp_1234567890abcdef1234 "
+        "contact=oncall@example.com"
+    )
+    redacted = redact_secrets(raw)
+    assert "eyJhbGciOiJIUzI1NiJ9" not in redacted
+    assert "AIzaSyA" not in redacted
+    assert "ghp_1234" not in redacted
+    assert "oncall@example.com" not in redacted
+    assert "[REDACTED_SECRET]" in redacted
+    assert "[REDACTED_EMAIL]" in redacted
 
 
 @pytest.mark.unit

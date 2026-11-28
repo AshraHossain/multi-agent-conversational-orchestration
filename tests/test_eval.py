@@ -62,8 +62,10 @@ def test_eval_guardrails_verifier_matrix_and_repeat(
 
     data = json.loads(out_file.read_text(encoding="utf-8"))
     assert data["repeat"] == 3
-    assert data["guardrails"]["total"] == 10
-    assert data["guardrails"]["passed"] == 10
+    assert data["total_cases"] == len(ev.GOLDEN_CASES)
+    assert data["total_cases"] == 20
+    assert data["guardrails"]["total"] == 12
+    assert data["guardrails"]["passed"] == 12
     assert data["guardrail_pass_rate"] == 1.0
 
     vm = data["verifier_matrix"]

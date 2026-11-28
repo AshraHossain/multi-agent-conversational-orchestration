@@ -99,10 +99,15 @@ sequenceDiagram
 
 | Method | Route | Status codes | Purpose |
 |---|---|---|---|
-| GET | /health, /healthz, /readyz | 200 | Probe (bypasses auth) |
-| POST | /v1/incidents/triage | 201, 400, 401, 413, 415, 422, 429 | Create bounded run |
-| GET | /v1/runs/{run_id} | 200, 400, 401, 404, 429 | Read run history |
-| POST | /v1/runs/{run_id}/review | 200, 400, 401, 404, 409, 429 | Record demo approval/rejection |
+| GET | `/health`, `/healthz`, `/readyz`, `/metrics` | 200, 503 | Probes & Prometheus metrics (bypasses auth) |
+| GET | `/cockpit` | 200 | Offline Incident Cockpit operator UI (route-scoped CSP) |
+| POST | `/v1/incidents/triage` | 200, 201, 400, 401, 409, 413, 415, 422, 429 | Create bounded run (supports `Idempotency-Key` & `?use_crewai=true`) |
+| POST | `/v1/incidents/triage/async` | 200, 202, 400, 401, 409, 413, 415, 422, 429 | Queue async background triage run |
+| GET | `/v1/runs` | 200, 401, 429 | List & filter persisted runs (`status`, `incident_id`, `limit`, `offset`) |
+| GET | `/v1/runs/{run_id}` | 200, 400, 401, 404, 429 | Read run history |
+| GET | `/v1/runs/{run_id}/stream` | 200, 400, 401, 404, 429 | Stream live SSE iteration & completion events |
+| POST | `/v1/runs/{run_id}/follow-up` | 201, 400, 401, 404, 413, 415, 422, 429 | Create immutable child triage run with new operator evidence/note |
+| POST | `/v1/runs/{run_id}/review` | 200, 400, 401, 404, 409, 429 | Record human approval/rejection + audit note & chained digest (no execution) |
 
 ## Tool Contracts
 

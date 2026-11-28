@@ -20,11 +20,30 @@ jobs:
       - run: uv run ruff format --check .
       - run: uv run mypy src/ma_co
       - run: uv run pytest --cov=ma_co --cov-report=term-missing --cov-fail-under=80
-      - run: uv run python -m ma_co.eval --guardrails --verifier-matrix
+      - run: uv run python -m ma_co.eval --guardrails --verifier-matrix --repeat 3
+      - name: Dependency vulnerability audit
+        run: uvx pip-audit --strict --no-deps -r <(uv export --no-hashes --no-dev --no-emit-project)
 
   docker:
     runs-on: ubuntu-latest
     needs: verify
     steps:
       - uses: actions/checkout@v4
-      - run: docker build -t ma-co:ci .
+      - name: Build container image
+        run: docker build -t ma-co:ci .
+      - name: Live container smoke test (/readyz, /cockpit, /v1/incidents/triage)
+        run: |
+          docker run -d --name ma-co-smoke -p 127.0.0.1:8000:8000 -e CREWAI_MOCK=1 ma-co:ci
+          trap "docker rm -f ma-co-smoke" EXIT
+          for i in $(seq 1 20); do
+            if curl -fsS http://127.0.0.1:8000/readyz; then
+              break
+            fi
+            sleep 1
+          done
+          curl -fsS http://127.0.0.1:8000/readyz | grep -q '"ready"'
+          curl -fsS http://127.0.0.1:8000/cockpit | grep -q 'Multi-Agent Incident Cockpit'
+          curl -fsS -X POST http://127.0.0.1:8000/v1/incidents/triage \
+            -H "Content-Type: application/json" \
+            -d '{"incident_id":"INC-CI","alert":"Smoke check","evidence":["Prometheus 5xx=1%"],"proposed_action":"Review"}' \
+            | grep -q '"needs_review"'
